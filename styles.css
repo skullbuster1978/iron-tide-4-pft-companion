@@ -1,0 +1,345 @@
+/* IRON TIDE 4 — naval/athletic briefing aesthetic */
+:root {
+  --navy-950: #060d1a;
+  --navy-900: #0a1628;
+  --navy-800: #10203a;
+  --navy-700: #16294a;
+  --line: #22385e;
+  --ink: #e8eef7;
+  --muted: #8fa3bd;
+  --gold: #f5b301;
+  --gold-dim: #b8890a;
+  --green: #3ddc84;
+  --red: #ff6b6b;
+  --mono: "SFMono-Regular", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--navy-950);
+  color: var(--ink);
+  font-family: "Helvetica Neue", Arial, system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+/* ---------- Masthead ---------- */
+.masthead {
+  text-align: center;
+  padding: 28px 16px 18px;
+  background: linear-gradient(180deg, var(--navy-800), var(--navy-950));
+  border-bottom: 3px solid var(--gold);
+}
+.masthead .kicker {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--muted);
+}
+.masthead h1 {
+  font-family: "Saira Stencil One", "Arial Black", sans-serif;
+  font-size: clamp(38px, 8vw, 64px);
+  letter-spacing: 6px;
+  margin: 6px 0 2px;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+.masthead .sub {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+/* ---------- Mission bar ---------- */
+.missionbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+  justify-content: center;
+  padding: 10px 16px;
+  background: var(--navy-900);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.missionbar .pill {
+  border: 1px solid var(--line);
+  background: var(--navy-800);
+  padding: 8px 14px;
+  border-radius: 4px;
+}
+.missionbar .label {
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-right: 8px;
+  font-size: 11px;
+}
+#cloudStatus { margin-left: auto; align-self: center; color: var(--muted); }
+#cloudStatus.on { color: var(--green); }
+
+/* ---------- Tabs ---------- */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 12px 0;
+}
+.tabs button {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+.tabs button.active {
+  color: var(--navy-950);
+  background: var(--gold);
+  border-color: var(--gold);
+  font-weight: 700;
+}
+
+main { max-width: 1060px; margin: 0 auto; padding: 0 16px 60px; }
+.tabpane { display: none; border: 1px solid var(--line); border-radius: 0 8px 8px 8px; background: var(--navy-900); padding: 20px; }
+.tabpane.active { display: block; }
+
+/* ---------- Week rail ---------- */
+.weekrail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.weekrail button {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  background: var(--navy-800);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.weekrail button.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--navy-950);
+  font-weight: 700;
+}
+.phasebanner {
+  border-left: 4px solid var(--gold);
+  background: var(--navy-800);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.phasebanner .phasename { color: var(--gold); font-weight: 700; letter-spacing: 3px; }
+.weekcount {
+  font-family: var(--mono);
+  color: var(--muted);
+  font-size: 13px;
+  margin: 4px 0 12px;
+}
+.weekcount b { color: var(--green); }
+
+/* ---------- Session cards ---------- */
+.sessions { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.session {
+  background: var(--navy-800);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--gold);
+  border-radius: 6px;
+  padding: 14px;
+}
+.session h3 {
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin: 0 0 10px;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+.session h3 .snum { color: var(--gold); margin-right: 8px; }
+
+.task {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 8px;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+  border-radius: 4px;
+}
+.task:hover { background: var(--navy-700); }
+.task .box {
+  flex: 0 0 22px;
+  height: 22px;
+  border: 2px solid var(--muted);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: transparent;
+  margin-top: 1px;
+}
+.task.done .box { border-color: var(--green); background: var(--green); color: var(--navy-950); }
+.task .tnum { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+.task.done .tnum, .task.done .ttitle { text-decoration: line-through; color: var(--muted); }
+.task .ttitle { font-weight: 600; font-size: 14px; }
+.task .trx { font-family: var(--mono); font-size: 12.5px; color: var(--gold); }
+.task .tcue { font-size: 12.5px; color: var(--muted); }
+
+/* ---------- Stopwatch ---------- */
+.stopwatch {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stopwatch .display {
+  font-family: var(--mono);
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--green);
+  min-width: 110px;
+}
+.stopwatch button {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  background: var(--navy-700);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.stopwatch button:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ---------- Panels, forms ---------- */
+.panel {
+  background: var(--navy-800);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: 18px;
+}
+.panel h2 {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-family: var(--mono); letter-spacing: 1px; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--navy-950);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 4px;
+  padding: 9px 10px;
+  font-size: 14px;
+  font-family: var(--mono);
+}
+.row3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+button.primary {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: var(--gold);
+  color: var(--navy-950);
+  border: none;
+  border-radius: 4px;
+  padding: 11px 20px;
+  cursor: pointer;
+  font-weight: 700;
+}
+button.primary:hover { background: #ffc61a; }
+button.ghost {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+button.ghost:hover { border-color: var(--gold); color: var(--gold); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.notice {
+  border: 1px solid var(--gold-dim);
+  background: #2a2103;
+  color: #ffd970;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+.notice a { color: var(--gold); }
+
+/* ---------- Calculator ---------- */
+.scoregrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }
+.scorecard { background: var(--navy-800); border: 1px solid var(--line); border-radius: 6px; padding: 14px; text-align: center; }
+.scorecard .ev { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; color: var(--muted); }
+.scorecard .pts { font-family: "Saira Stencil One", "Arial Black", sans-serif; font-size: 44px; color: var(--gold); }
+.scorecard .inp { font-family: var(--mono); color: var(--ink); font-size: 13px; margin-top: 4px; }
+.totalbar { margin-top: 14px; text-align: center; font-family: var(--mono); }
+.totalbar .total { font-size: 34px; color: var(--green); font-weight: 700; }
+.fineprint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+/* ---------- Readiness log ---------- */
+.logentry {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--navy-800);
+  font-size: 14px;
+}
+.logentry .meta { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.logentry .del { float: right; background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; }
+
+/* ---------- Test plan ---------- */
+.testplan h3 { font-family: var(--mono); letter-spacing: 2px; color: var(--gold); font-size: 14px; text-transform: uppercase; margin-top: 22px; }
+.testplan ul { padding-left: 20px; }
+.testplan li { margin-bottom: 6px; }
+
+/* ---------- Links ---------- */
+.links { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px; }
+.links a {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  padding: 8px 12px;
+  text-decoration: none;
+}
+.links a:hover { background: var(--gold); color: var(--navy-950); }
+
+footer { text-align: center; color: var(--muted); font-family: var(--mono); font-size: 11px; letter-spacing: 2px; padding: 26px 0 10px; }
