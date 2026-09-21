@@ -24,9 +24,12 @@ email address and their workout checkmarks stay saved when they log back in.
 2. **Confirm email auth is enabled.** In Supabase: Authentication → Providers →
    make sure **Email** is enabled. (Confirm-email can stay on; the app handles it.)
 
-3. **Paste your anon key.** In your Supabase dashboard go to Project Settings →
-   Data API and copy the **anon public** key. Paste it into `config.js` in place
-   of `PASTE_ANON_KEY_HERE`.
+3. **Wire your anon key.** `config.js` in this repo ships with a
+   `PASTE_ANON_KEY_HERE` placeholder. For a new deployment, copy the **anon
+   public** key from your Supabase dashboard (Project Settings → Data API) into
+   `config.js` before deploying. The live deployment already has its key wired
+   directly — do not overwrite the deployed `config.js` with the placeholder
+   copy or cloud login will stop working.
 
 4. **Deploy as a static site.** This repo has no build step — deploy it as-is:
    - **Vercel:** import the repo, framework preset "Other", no build command, output directory `/`.
