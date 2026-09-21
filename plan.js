@@ -1,301 +1,301 @@
 /* IRON TIDE 4 — 12-week training plan data.
- * 12 weeks x 6 sessions x 3 tasks = 216 tasks.
- * Task shape: { n: "01", icon: "...", title: "...", rx: "...", cue: "..." }
- * Week 1 Session 1 is the original verbatim.
+ * Base session data + Concept2 2K interval matrix + video links.
+ * Rendering rules (Monday push+plank merge, matrix replacement, personalization)
+ * live in app.js, mirroring the original app.
  */
 (function () {
   "use strict";
 
-  var PHASES = [
-    { name: "FOUNDATION", cue: "Learn the movements. Do not chase speed yet." },
-    { name: "FOUNDATION", cue: "Learn the movements. Do not chase speed yet." },
-    { name: "BUILD", cue: "Add volume. Earn your pace." },
-    { name: "BUILD", cue: "Add volume. Earn your pace." },
-    { name: "BUILD", cue: "Add volume. Earn your pace." },
-    { name: "DRIVE", cue: "Hold form under fatigue. This is where the test is won." },
-    { name: "DRIVE", cue: "Hold form under fatigue. This is where the test is won." },
-    { name: "DRIVE", cue: "Hold form under fatigue. This is where the test is won." },
-    { name: "PEAK", cue: "Hard efforts, full recovery. Trust the work." },
-    { name: "PEAK", cue: "Hard efforts, full recovery. Trust the work." },
-    { name: "TAPER", cue: "Cut the volume. Stay sharp." },
-    { name: "TEST", cue: "Execute. This is what the twelve weeks were for." }
-  ];
+  var X3_PUSH = "Chest press · Overhead press · Front/split squat · Triceps press";
+  var X3_PULL = "Deadlift · Bent row · Calf raise · Biceps curl";
 
-  // Rowing follows the Concept2 2K 12-week plan shape:
-  // time trials, intervals (8x500 / 4x1000 / pyramids), steady distance.
-  var ROW_MON = [
-    { t: "Initial 2,000 m time trial", rx: "2,000 m", cue: "Do not start too fast · Build pace in the second half · Record your time" },
-    { t: "8 x 500 m intervals", rx: "8 x 500 m / 2:00 rest", cue: "Even splits · Strong last rep" },
-    { t: "4 x 1,000 m", rx: "4 x 1,000 m / 3:00 rest", cue: "Settle into rhythm by rep 2" },
-    { t: "Pyramid 250-1,000 m", rx: "250-500-750-1,000-750-500-250 / 2:00 rest", cue: "Smooth gear changes" },
-    { t: "5 x 1,500 m", rx: "5 x 1,500 m / 3:00 rest", cue: "Longer reps · Stay patient" },
-    { t: "Mid-plan 2,000 m time trial", rx: "2,000 m", cue: "Race plan: controlled start, push the third 500" },
-    { t: "6 x 1,000 m", rx: "6 x 1,000 m / 2:30 rest", cue: "Hold your week-6 trial pace" },
-    { t: "4 x 2,000 m", rx: "4 x 2,000 m / 4:00 rest", cue: "Aerobic strength · Even pacing" },
-    { t: "12 x 500 m", rx: "12 x 500 m / 1:30 rest", cue: "Short rest · Practice suffering well" },
-    { t: "Final 2,000 m time trial", rx: "2,000 m", cue: "Dress rehearsal · Full race plan" },
-    { t: "4 x 500 m strides", rx: "4 x 500 m / 3:00 rest", cue: "Taper · Sharp but easy" },
-    { t: "Shakeout row", rx: "15 min easy", cue: "Test week · Stay loose" }
-  ];
-
-  var ROW_WED = [
-    { t: "Steady 3 x 10 min", rx: "30 min easy", cue: "Technique first · Conversational pace" },
-    { t: "Steady 35 min", rx: "35 min easy", cue: "Long and easy" },
-    { t: "Steady 40 min", rx: "40 min easy", cue: "Aerobic base" },
-    { t: "Steady 35 min", rx: "35 min easy", cue: "Recovery-week volume" },
-    { t: "Steady 45 min", rx: "45 min easy", cue: "Longest steady row yet" },
-    { t: "Steady 40 min", rx: "40 min easy", cue: "Shake out after the trial" },
-    { t: "Steady 45 min", rx: "45 min easy", cue: "Aerobic base" },
-    { t: "Steady 50 min", rx: "50 min easy", cue: "Capstone distance" },
-    { t: "Steady 40 min", rx: "40 min easy", cue: "Easy after hard intervals" },
-    { t: "Steady 45 min", rx: "45 min easy", cue: "Last big aerobic session" },
-    { t: "Steady 30 min easy", rx: "30 min easy", cue: "Taper · Keep it light" },
-    { t: "Easy 20 min spin", rx: "20 min easy", cue: "Test week · Stay loose" }
-  ];
-
-  var ROW_FRI = [
-    { t: "8 x 500 m", rx: "8 x 500 m / 2:00 rest", cue: "Even splits · Last one strong" },
-    { t: "4 x 1,000 m", rx: "4 x 1,000 m / 3:00 rest", cue: "Rhythm by rep 2" },
-    { t: "Pyramid session", rx: "250-500-750-1,000-750-500-250", cue: "Smooth gears" },
-    { t: "10 x 500 m", rx: "10 x 500 m / 2:00 rest", cue: "Volume intervals · Stay tall" },
-    { t: "8 x 500 m", rx: "8 x 500 m / 1:30 rest", cue: "Shorter rest this week" },
-    { t: "6 x 1,000 m", rx: "6 x 1,000 m / 2:30 rest", cue: "Post-trial strength" },
-    { t: "12 x 500 m", rx: "12 x 500 m / 1:30 rest", cue: "Big interval day" },
-    { t: "Pyramid 500-2,000 m", rx: "500-1,000-1,500-2,000-1,500-1,000-500", cue: "The big pyramid" },
-    { t: "8 x 500 m hard", rx: "8 x 500 m / 2:00 rest", cue: "Best average of the plan" },
-    { t: "5 x 1,000 m", rx: "5 x 1,000 m / 3:00 rest", cue: "Sharpening" },
-    { t: "6 x 250 m strides", rx: "6 x 250 m / 2:00 rest", cue: "Taper · Fast and fresh" },
-    { t: "Shakeout row", rx: "15 min easy", cue: "Test week · Stay loose" }
-  ];
-
-  var ROW_SAT = [
-    { t: "Optional recovery row", rx: "20-30 min easy", cue: "Optional · Keep it easy" },
-    { t: "Optional steady 30 min", rx: "30 min easy", cue: "Optional · Conversational" },
-    { t: "Optional 35 min", rx: "35 min easy", cue: "Optional" },
-    { t: "Optional 25 min easy", rx: "25 min easy", cue: "Optional · Recovery focus" },
-    { t: "Optional 40 min", rx: "40 min easy", cue: "Optional" },
-    { t: "Optional 30 min", rx: "30 min easy", cue: "Optional · Flush the legs" },
-    { t: "Optional 35 min", rx: "35 min easy", cue: "Optional" },
-    { t: "Optional 30 min", rx: "30 min easy", cue: "Optional" },
-    { t: "Optional 25 min", rx: "25 min easy", cue: "Optional · Stay fresh" },
-    { t: "Optional 20 min easy", rx: "20 min easy", cue: "Optional" },
-    { t: "Rest", rx: "Full rest", cue: "Taper · Rest is training" },
-    { t: "Rest", rx: "Feet up", cue: "Test week · Rest" }
-  ];
-
-  // Push-up volume builds toward the 35-rep mission target.
-  var PUSH = [
-    { rx: "5 x 12 push-ups (easy)", cue: "Easy · 40% of your best" },
-    { rx: "6 x 12 push-ups", cue: "Strict form · Full lockout" },
-    { rx: "5 x 15 push-ups", cue: "Add volume" },
-    { rx: "6 x 15 push-ups", cue: "Chest to deck every rep" },
-    { rx: "5 x 18 push-ups", cue: "Longer sets" },
-    { rx: "Max set test + 4 x 15", cue: "Test your max · Record it" },
-    { rx: "6 x 18 push-ups", cue: "Hold form as sets get hard" },
-    { rx: "5 x 20 push-ups", cue: "Big volume day" },
-    { rx: "6 x 20 push-ups", cue: "Peak volume" },
-    { rx: "Max set test + 4 x 20", cue: "Retest your max" },
-    { rx: "3 x 15 push-ups (easy)", cue: "Taper · Stay sharp" },
-    { rx: "3 x 10 push-ups (easy)", cue: "Test week · Grease the groove" }
-  ];
-
-  // Plank builds toward the 2:52 mission target.
-  var PLANK = [
-    { rx: "4 x 0:30", cue: "Hips level · Breathe slow" },
-    { rx: "4 x 0:40", cue: "Add time" },
-    { rx: "3 x 1:00", cue: "Longer holds" },
-    { rx: "4 x 1:00", cue: "Build the base" },
-    { rx: "3 x 1:15", cue: "Stay tight" },
-    { rx: "2 x 1:30 + max hold test", cue: "Test your max · Record it" },
-    { rx: "3 x 1:30", cue: "Post-test volume" },
-    { rx: "2 x 1:45", cue: "Long holds" },
-    { rx: "3 x 1:45", cue: "Peak plank volume" },
-    { rx: "2 x 2:00", cue: "Two minutes strong" },
-    { rx: "2 x 1:00 (easy)", cue: "Taper · Stay sharp" },
-    { rx: "2 x 0:45 (easy)", cue: "Test week · Stay sharp" }
-  ];
-
-  // X3 push work: light -> heavy across the plan.
-  var X3 = [
-    { t: "X3 Push - light", rx: "Chest press - Overhead press - Front/split squat - Triceps press", cue: "15-25 slow reps · No partials" },
-    { t: "X3 Push - light", rx: "Chest press - Overhead press - Front/split squat - Triceps press", cue: "15-25 slow reps · No partials" },
-    { t: "X3 Push - light-medium", rx: "Chest press - Overhead press - Squat - Triceps press", cue: "20-30 slow reps" },
-    { t: "X3 Push - medium", rx: "Chest press - Overhead press - Squat - Triceps press", cue: "20-30 slow reps" },
-    { t: "X3 Push - medium", rx: "Chest press - Overhead press - Squat - Triceps press", cue: "25-35 slow reps" },
-    { t: "X3 Push - medium", rx: "Chest press - Overhead press - Squat - Triceps press", cue: "25-35 slow reps" },
-    { t: "X3 Push - medium-heavy", rx: "Full push day - slow eccentrics", cue: "25-35 reps · Own every inch" },
-    { t: "X3 Push - heavy", rx: "Full push day", cue: "Heavy band · Perfect form" },
-    { t: "X3 Push - heavy", rx: "Full push day", cue: "Peak strength" },
-    { t: "X3 Push - medium-heavy", rx: "Full push day", cue: "Sharpening" },
-    { t: "X3 Push - light (easy)", rx: "Easy full push day", cue: "Taper · Move blood only" },
-    { t: "X3 activation - light", rx: "Easy presses - 10-15 reps", cue: "Test week · Prime, don't fatigue" }
-  ];
-
-  var LADDERS = [
-    "2-4-6-8-6-4-2", "2-4-6-8-6-4-2", "4-6-8-10-8-6-4", "4-6-8-10-8-6-4",
-    "4-6-8-10-8-6-4", "6-8-10-12-10-8-6", "6-8-10-12-10-8-6", "6-8-10-12-10-8-6",
-    "8-10-12-14-12-10-8", "4-6-8-6-4", "2-4-6-4-2 - easy"
-  ];
-
-  var SIDE_BASE = [35, 40, 45, 50, 55, 60, 70, 75, 80, 90, 45];
-  var PLANK_LIGHT = [
-    "3 x 0:35", "3 x 0:40", "3 x 0:45", "3 x 0:50", "3 x 0:55", "3 x 1:00",
-    "3 x 1:05", "3 x 1:10", "3 x 1:15", "3 x 1:20", "2 x 0:45 - easy"
-  ];
-  var WALK = [
-    "20 min", "20 min", "25 min", "20 min", "25 min", "25 min",
-    "30 min", "25 min", "30 min", "20 min", "15 min - easy"
-  ];
-
-  var STRETCH = {
-    t: "Guided stretch routine",
-    rx: "10-15 min full-body stretch",
-    cue: "Follow the video · Breathe into each stretch"
+  var X3_VIDEOS = {
+    push: [
+      { title: "Chest Press", url: "https://www.youtube.com/watch?v=wzyWHYqidBY", channel: "Jaquish Biomedical" },
+      { title: "Overhead Press", url: "https://www.youtube.com/watch?v=mR0vniNGjOc", channel: "YouTube" },
+      { title: "Split Squat", url: "https://www.youtube.com/watch?v=G3FQuH3YFlg", channel: "YouTube" },
+      { title: "Tricep Press", url: "https://www.youtube.com/watch?v=rZ_PCpQ6kC4", channel: "Jaquish Biomedical" }
+    ],
+    pull: [
+      { title: "Deadlift", url: "https://www.youtube.com/watch?v=b_NucMEQ9jU", channel: "Jaquish Biomedical" },
+      { title: "Bent-Over Row", url: "https://www.youtube.com/watch?v=E4aRw8N6Kjk", channel: "Jaquish Biomedical" },
+      { title: "Calf Raise", url: "https://www.youtube.com/watch?v=wktFcNKD7Wc", channel: "Red Meat and Rubber Bands" },
+      { title: "Bicep Curl", url: "https://www.youtube.com/watch?v=EupY4PaIztY", channel: "Jaquish Biomedical" }
+    ]
   };
 
-  function T(n, icon, title, rx, cue) {
-    return { n: n, icon: icon, title: title, rx: rx, cue: cue };
+  function mx(t, d, m) { return { t: t, d: d, m: m }; }
+  function rowMx(work, rest) {
+    return mx("Concept2 intervals", work + " work",
+      rest + " very easy row between work intervals · Warm up 5–10 min");
+  }
+  var D4M = "Concept2 Day 4 · Hold a consistent pace · Warm up 5–10 min";
+
+  var M_W1 = {
+    d1: mx("Initial 2,000 m time trial", "2,000 m",
+      "Do not start too fast · Build pace in the second half · Record your time"),
+    d2: rowMx("4 × 4:00", "2:00"),
+    d3: rowMx("6 × 2:00", "1:00"),
+    d4: mx("Optional steady row", "5,000 m", D4M)
+  };
+  var M_W2 = {
+    d1: rowMx("4 × 4:00", "2:00"),
+    d2: rowMx("3 × 6:00", "3:00"),
+    d3: rowMx("6 × 2:00", "1:00"),
+    d4: mx("Optional steady row", "5,000 m", D4M)
+  };
+  var M_W3 = {
+    d1: rowMx("5 × 4:00", "2:00"),
+    d2: rowMx("3 × 6:00", "3:00"),
+    d3: rowMx("8 × 2:00", "1:00"),
+    d4: mx("Optional steady row", "6,000 m", D4M)
+  };
+  var M_W5 = {
+    d1: rowMx("6 × 4:00", "2:00"),
+    d2: rowMx("4 × 6:00", "3:00"),
+    d3: rowMx("10 × 2:00", "1:00"),
+    d4: mx("Optional steady row", "8,000 m", D4M)
+  };
+  var M_W7 = {
+    d1: rowMx("6 × 3:00", "2:00"),
+    d2: rowMx("4 × 5:00", "3:00"),
+    d3: rowMx("12 × 1:00", "1:00"),
+    d4: mx("Optional steady row", "10,000 m", D4M)
+  };
+  var M_W8 = {
+    d1: rowMx("6 × 2:00", "2:00"),
+    d2: rowMx("4 × 4:00", "3:00"),
+    d3: mx("2,000 m test", "2,000 m",
+      "Use your recorded workout paces to plan the test · Record your final time"),
+    d4: mx("Optional steady row", "10,000 m", D4M)
+  };
+  var MATRIX = [M_W1, M_W2, M_W3, M_W3, M_W5, M_W5, M_W7, M_W8, M_W5, M_W5, M_W7, M_W8];
+
+  var PACE_LOG = {
+    t: "Pace & log", d: "Record average / 500 m",
+    m: "Row 24–34 spm · Use this pace to guide future workouts"
+  };
+
+  function x3(kind, mod, meta) { return { kind: kind, mod: mod, meta: meta || "" }; }
+  function pp(icon, title, push, plank, meta) {
+    return { icon: icon, title: title, push: push, plank: plank, meta: meta || "" };
   }
 
-  // Week 1 Session 1 — original verbatim.
-  function week1Session1() {
-    return {
-      title: "Concept2 Day 1 - Push-ups, plank & X3 Push",
-      tasks: [
-        T("01", "🏋", "X3 Push · light",
-          "Chest press · Overhead press · Front/split squat · Triceps press",
-          "15–25 slow reps · no partials"),
-        T("02", "💪", "Push-ups + plank",
-          "5 × 12 push-ups (easy) · 4 × 0:30",
-          "Complete both before the row · Easy 40% of your best"),
-        T("03", "🚣", "Initial 2,000 m time trial",
-          "2,000 m",
-          "Do not start too fast · Build pace in the second half · Record your time")
-      ]
-    };
-  }
+  var WED = {
+    name: "10-minute upper-body stretch",
+    tasks: [
+      { n: "01", icon: "ST", title: "Chest & shoulders",
+        detail: "Doorway stretch · 2 × 0:30 each side", meta: "Stand tall. Keep it gentle.",
+        video: "https://www.youtube.com/watch?v=B9uY01NoqBg" },
+      { n: "02", icon: "ST", title: "Upper back & lats",
+        detail: "Child's pose side reach · 2 × 0:30 each side", meta: "Breathe slowly. Do not bounce.",
+        video: "https://www.youtube.com/watch?v=YTAwpiX2Dsg" },
+      { n: "03", icon: "ST", title: "Hip flexors",
+        detail: "Half-kneeling stretch · 2 × 0:30 each side", meta: "Squeeze the back glute. Keep ribs down.",
+        video: "https://www.youtube.com/watch?v=bnVfloe6yTo" }
+    ]
+  };
+  var FRI = {
+    name: "10-minute lower-body stretch",
+    tasks: [
+      { n: "01", icon: "ST", title: "Hamstrings",
+        detail: "Standing or seated stretch · 2 × 0:30 each side", meta: "Keep your back long and knee soft.",
+        video: "https://www.youtube.com/watch?v=G5EcVycvaEk" },
+      { n: "02", icon: "ST", title: "Glutes",
+        detail: "Figure-four stretch · 2 × 0:30 each side", meta: "Use gentle pressure only.",
+        video: "https://www.youtube.com/watch?v=Xb5gHdYtHnk" },
+      { n: "03", icon: "ST", title: "Calves & ankles",
+        detail: "Wall calf stretch · 2 × 0:30 each side", meta: "Keep your heel down. Switch sides.",
+        video: "https://www.youtube.com/watch?v=mafo7o7OnFo" }
+    ]
+  };
 
-  function session1(w) {
-    if (w === 0) return week1Session1();
-    return {
-      title: "Concept2 Day 1 - Push-ups, plank & X3 Push",
-      tasks: [
-        T("01", "🏋", X3[w].t, X3[w].rx, X3[w].cue),
-        T("02", "💪", "Push-ups + plank", PUSH[w].rx + " · " + PLANK[w].rx, PUSH[w].cue),
-        T("03", "🚣", ROW_MON[w].t, ROW_MON[w].rx, ROW_MON[w].cue)
-      ]
-    };
-  }
+  var TEST_PP = [
+    { n: "01", icon: "PU", title: "Push-ups", detail: "Target 39", meta: "13 reps each 20-second block" },
+    { n: "02", icon: "PL", title: "Plank", detail: "Target 3:01", meta: "Breathe and hold one straight line" },
+    { n: "03", icon: "2K", title: "Optional steady row", detail: "10,000 m", meta: D4M }
+  ];
 
-  function session2(w) {
-    return {
-      title: "Strength - Push-up & plank volume",
-      tasks: [
-        T("01", "💪", "Push-up volume", PUSH[w].rx, PUSH[w].cue),
-        T("02", "⏱", "Plank holds", PLANK[w].rx, PLANK[w].cue),
-        T("03", "🏋", "X3 Pull - light", "Bent rows · Pulldowns · Curls", "15-20 slow reps · Squeeze every rep")
-      ]
-    };
-  }
+  var WEEKS = [
+    { num: 1, phase: "FOUNDATION", load: "BUILD",
+      goal: "Learn the movements. Do not chase speed yet.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & X3 Push",
+        x3: x3("push", "light", "15–25 slow reps · no partials"),
+        pushSets: "5 easy sets", plank: "4 × 0:30", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Row intervals & X3 Pull",
+        x3: x3("pull", "light", "15–25 slow reps") },
+      thu: { name: "Concept2 Day 3 · Row, push-ups, plank & X3 Push",
+        x3: x3("push", "light", "No partials"),
+        pp: pp("PU", "Push-ups + plank", "6 × 0:15 push-ups", "3 × 0:45 plank", "Smooth reps") },
+      sat: { name: "Concept2 optional Day 4 · Easy row, plank & X3 Pull",
+        x3: x3("pull", "light", "15–25 slow reps"),
+        plank: { icon: "PL", title: "Plank hold", detail: "1 × 1:00", meta: "Finish with clean form" } } },
 
-  function session3(w) {
-    return {
-      title: "Concept2 Day 2 - Row + guided stretch",
-      tasks: [
-        T("01", "🚣", ROW_WED[w].t, ROW_WED[w].rx, ROW_WED[w].cue),
-        T("02", "🧘", STRETCH.t, STRETCH.rx, STRETCH.cue),
-        T("03", "💪", "Push-up practice", "3 x 10 easy", "Grease the groove · Perfect reps")
-      ]
-    };
-  }
+    { num: 2, phase: "FOUNDATION", load: "BUILD",
+      goal: "Add a little more time and work.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & X3 Push",
+        x3: x3("push", "light", "No partials"),
+        pushSets: "6 easy sets", plank: "4 × 0:40", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Row intervals & X3 Pull",
+        x3: x3("pull", "light", "") },
+      thu: { name: "Concept2 Day 3 · Row, push-ups, plank & X3 Push",
+        x3: x3("push", "light", ""),
+        pp: pp("PU", "Push-ups + plank", "5 × 0:20 push-ups", "3 × 0:55 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Easy row, plank & X3 Pull",
+        x3: x3("pull", "light", ""),
+        plank: { icon: "PL", title: "Plank hold", detail: "1 × 1:15", meta: "" } } },
 
-  function session4(w) {
-    var side = SIDE_BASE[w];
-    var sideRx = "3 x 0:" + side + " + 2 x 0:" + Math.round(side * 0.6) + "/side";
-    return {
-      title: "Strength - Push-up ladder & core",
-      tasks: [
-        T("01", "💪", "Push-up ladder", LADDERS[w] + " reps", "Rest 0:30 between rungs"),
-        T("02", "⏱", "Plank + side plank", sideRx, "No sagging · No holding your breath"),
-        T("03", "🏋", X3[w].t, X3[w].rx, X3[w].cue)
-      ]
-    };
-  }
+    { num: 3, phase: "BUILD I", load: "BUILD",
+      goal: "Build repeatable speed.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & X3 Push",
+        x3: x3("push", "normal", "15–40 full reps, then safe partials"),
+        pushSets: "8 easy sets", plank: "4 × 0:45", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Row repeats & X3 Pull",
+        x3: x3("pull", "normal", "") },
+      thu: { name: "Concept2 Day 3 · Row, push-ups, plank & X3 Push",
+        x3: x3("push", "normal", ""),
+        pp: pp("PU", "Push-ups + plank", "3 × 0:30 push-ups", "3 × 1:00 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Easy row, plank & X3 Pull",
+        x3: x3("pull", "normal", ""),
+        plank: { icon: "PL", title: "Plank hold", detail: "1 × 1:30", meta: "" } } },
 
-  function session5(w) {
-    return {
-      title: "Concept2 Day 3 - Row + guided stretch",
-      tasks: [
-        T("01", "🚣", ROW_FRI[w].t, ROW_FRI[w].rx, ROW_FRI[w].cue),
-        T("02", "🧘", STRETCH.t, STRETCH.rx, STRETCH.cue),
-        T("03", "⏱", "Plank practice", PLANK_LIGHT[w], "Easy holds · Stay long")
-      ]
-    };
-  }
+    { num: 4, phase: "CHECK-IN", load: "LIGHT",
+      goal: "Finish Cycle 1 with repeatable Concept2 pace.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & light X3",
+        x3: x3("push", "light", "No partials"),
+        pushSets: "4 easy sets", plank: "3 × 0:30", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Row repeats & light X3",
+        x3: x3("pull", "light", "") },
+      thu: { name: "Concept2 Day 3 · Prime the system",
+        x3: x3("push", "light", ""),
+        pp: pp("PU", "Easy push-ups + plank", "2 × 0:15 push-ups", "2 × 0:45 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Muscular check-in", checkin: true } },
 
-  function session6(w) {
-    return {
-      title: "Optional Concept2 Day 4 - Recovery",
-      tasks: [
-        T("01", "🚣", ROW_SAT[w].t, ROW_SAT[w].rx, ROW_SAT[w].cue),
-        T("02", "🚶", "Walk", WALK[w], "Optional · Nasal breathing"),
-        T("03", "🧘", "Hips & shoulders mobility", "10 min", "Optional · Move well")
-      ]
-    };
-  }
+    { num: 5, phase: "BUILD II", load: "BUILD",
+      goal: "Start the second training block.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & X3 Push",
+        x3: x3("push", "normal", ""),
+        pushSets: "6 medium sets", plank: "3 × 1:00", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Row repeats & X3 Pull",
+        x3: x3("pull", "normal", "") },
+      thu: { name: "Concept2 Day 3 · Row, push-ups, plank & X3 Push",
+        x3: x3("push", "normal", ""),
+        pp: pp("PU", "Push-ups + plank", "4 × 0:30 push-ups", "2 × 1:15 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Easy row, plank & X3 Pull",
+        x3: x3("pull", "normal", ""),
+        plank: { icon: "PL", title: "Plank hold", detail: "1 × 1:45", meta: "" } } },
 
-  // Week 12: test week. Friday is PFT test day.
-  function week12() {
-    function s(title, tasks) { return { title: title, tasks: tasks }; }
-    return [
-      s("Shakeout - easy movement", [
-        T("01", "🏋", "X3 activation - light", "Easy presses - 10-15 reps", "Prime, don't fatigue"),
-        T("02", "💪", "Push-up practice", "3 x 10 easy", "Grease the groove"),
-        T("03", "🚣", "Easy 20 min spin", "20 min easy", "Stay loose")
-      ]),
-      s("Rehearsal - test pace", [
-        T("01", "💪", "Push-up rehearsal", "2 x 15 at test pace", "Practice your cadence"),
-        T("02", "⏱", "Plank rehearsal", "2 x 1:00", "Test-day position"),
-        T("03", "🚣", "Easy 15 min row", "15 min easy", "Stay loose")
-      ]),
-      s("Easy row + stretch", [
-        T("01", "🚣", "Easy 20 min spin", "20 min easy", "Conversational"),
-        T("02", "🧘", STRETCH.t, STRETCH.rx, STRETCH.cue),
-        T("03", "🚶", "Walk", "15 min - easy", "Nasal breathing")
-      ]),
-      s("Rest + mobility", [
-        T("01", "🚶", "Walk", "20 min", "Easy"),
-        T("02", "🧘", STRETCH.t, STRETCH.rx, STRETCH.cue),
-        T("03", "🧘", "Hips & shoulders mobility", "10 min", "Move well")
-      ]),
-      s("PFT TEST DAY", [
-        T("01", "💪", "Push-up test", "Max reps - 2:00", "Steady cadence · Don't sprint the first 30 seconds"),
-        T("02", "⏱", "Plank test", "Max hold", "Breathe · One long effort"),
-        T("03", "🚣", "2,000 m row test", "2,000 m", "Execute the plan · Empty the tank")
-      ]),
-      s("Rest - mission complete", [
-        T("01", "📋", "Log your scores", "Record all three events", "Write them down while fresh"),
-        T("02", "🧘", "Easy stretch", "10 min", "You earned it"),
-        T("03", "🏁", "Rest", "Feet up", "Mission complete")
-      ])
-    ];
-  }
+    { num: 6, phase: "BUILD II", load: "BUILD",
+      goal: "Build endurance and short speed.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & X3 Push",
+        x3: x3("push", "normal", ""),
+        pushSets: "8 medium sets", plank: "3 × 1:10", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Row repeats & X3 Pull",
+        x3: x3("pull", "normal", "") },
+      thu: { name: "Concept2 Day 3 · Short speed, push-ups & plank",
+        x3: x3("push", "normal", ""),
+        pp: pp("PU", "Push-ups + plank", "2 × 0:45 push-ups", "2 × 1:30 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Easy row, plank & X3 Pull",
+        x3: x3("pull", "normal", ""),
+        plank: { icon: "PL", title: "Plank hold", detail: "1 × 2:00", meta: "" } } },
 
-  function build() {
-    var weeks = [];
-    for (var w = 0; w < 12; w++) {
-      var sessions = (w === 11)
-        ? week12()
-        : [session1(w), session2(w), session3(w), session4(w), session5(w), session6(w)];
-      weeks.push({
-        num: w + 1,
-        phase: PHASES[w].name,
-        phaseCue: PHASES[w].cue,
-        sessions: sessions
-      });
-    }
-    return { weeks: weeks };
-  }
+    { num: 7, phase: "BUILD II", load: "BUILD",
+      goal: "Learn to hold your pace when tired.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & X3 Push",
+        x3: x3("push", "normal", ""),
+        pushSets: "10 easy sets", plank: "3 × 1:15", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Long row repeats & X3 Pull",
+        x3: x3("pull", "normal", "") },
+      thu: { name: "Concept2 Day 3 · Pace under fatigue",
+        x3: x3("push", "normal", ""),
+        pp: pp("PU", "Push-ups + plank", "1 controlled 1:00 set", "2 × 1:45 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Easy row, plank & X3 Pull",
+        x3: x3("pull", "normal", ""),
+        plank: { icon: "PL", title: "Plank hold", detail: "1 × 2:15", meta: "" } } },
 
-  window.IRON_TIDE_PLAN = build();
+    { num: 8, phase: "CHECK-IN", load: "LIGHT",
+      goal: "Light week. Check your full PFT score again.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & light X3",
+        x3: x3("push", "light", "No partials"),
+        pushSets: "4 easy sets", plank: "2 × 0:45", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Row repeats & light X3",
+        x3: x3("pull", "light", "") },
+      thu: { name: "Concept2 Day 3 · Prime the system",
+        x3: x3("push", "light", ""),
+        pp: pp("PU", "Easy push-ups + plank", "2 × 0:15 push-ups", "1 × 1:00 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Muscular check-in", checkin: true } },
+
+    { num: 9, phase: "SPECIFIC", load: "PEAK",
+      goal: "Start using the 7:50 goal pace.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & X3 Push",
+        x3: x3("push", "normal", ""),
+        pushSets: "6 strong sets", plank: "2 × 1:30", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Goal-pace row & X3 Pull",
+        x3: x3("pull", "normal", "") },
+      thu: { name: "Concept2 Day 3 · Short speed & test strength",
+        x3: x3("push", "normal", ""),
+        pp: pp("PU", "Push-ups + plank", "3 × 0:30 push-ups", "1 × 2:30 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Easy row, plank & X3 Pull",
+        x3: x3("pull", "normal", ""),
+        plank: { icon: "PL", title: "Plank hold", detail: "2 × 1:00", meta: "" } } },
+
+    { num: 10, phase: "SPECIFIC", load: "PEAK",
+      goal: "Make goal pace feel normal.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & X3 Push",
+        x3: x3("push", "normal", ""),
+        pushSets: "8 medium sets", plank: "2 × 1:45", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Goal-pace row & X3 Pull",
+        x3: x3("pull", "normal", "") },
+      thu: { name: "Concept2 Day 3 · Goal pace under time",
+        x3: x3("push", "normal", ""),
+        pp: pp("PU", "Push-ups + plank", "1 controlled 1:00 set", "1 × 2:45 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Easy row, plank & X3 Pull",
+        x3: x3("pull", "normal", ""),
+        plank: { icon: "PL", title: "Plank hold", detail: "2 × 1:00", meta: "" } } },
+
+    { num: 11, phase: "SHARPEN", load: "TAPER",
+      goal: "Get sharp. Do less X3 so your body can recover.",
+      mon: { name: "Concept2 Day 1 · Push-ups, plank & reduced X3",
+        x3: x3("push", "70%", "No forced partials"),
+        pushSets: "5 easy sets", plank: "1 × 2:40", plankMeta: "Do not go to failure" },
+      tue: { name: "Concept2 Day 2 · Sharp row & reduced X3",
+        x3: x3("pull", "70%", "") },
+      thu: { name: "Concept2 Day 3 · Race-pace ladder",
+        x3: null,
+        rx: { t: "No X3 today", d: "Begin the recovery window" },
+        pp: pp("PU", "Easy push-ups + plank", "2 × 0:20 push-ups", "2 × 1:00 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Easy row & recovery",
+        x3: null,
+        rx: { t: "Rest", d: "Do not add extra hard work" },
+        plank: { icon: "PL", title: "Easy plank", detail: "1 × 0:45", meta: "" } } },
+
+    { num: 12, phase: "TEST WEEK", load: "TAPER",
+      goal: "Finish with the Concept2 2,000 m test and muscular events.",
+      mon: { name: "Concept2 Day 1 · Very easy strength",
+        x3: x3("push", "half volume", "No partials"),
+        pushSets: "3 easy sets", plank: "2 × 0:45", plankMeta: "" },
+      tue: { name: "Concept2 Day 2 · Last row tune-up & X3",
+        x3: x3("pull", "half volume", "No partials") },
+      thu: { name: "Concept2 Day 3 · Stay loose, finish fresh",
+        x3: null,
+        rx: { t: "Stop fresh", d: "No extra work" },
+        pp: pp("PU", "Easy push-ups + plank", "2 × 10 push-ups", "1 × 0:30 plank", "") },
+      sat: { name: "Concept2 optional Day 4 · Push-ups & plank", testPP: true } }
+  ];
+
+  window.IRON_TIDE_PLAN = {
+    weeks: WEEKS,
+    matrix: MATRIX,
+    wed: WED,
+    fri: FRI,
+    paceLog: PACE_LOG,
+    testPP: TEST_PP,
+    x3push: X3_PUSH,
+    x3pull: X3_PULL,
+    x3videos: X3_VIDEOS,
+    d4meta: D4M,
+    planUrl: "https://www.concept2.com/training/plans/2k-erg-test-12-week"
+  };
 })();
+
+window.IRON_TIDE_TABLES = {"female":{"17-19":{"45":{"pushups":15,"plank":"1:01","row":"10:40"},"50":{"pushups":18,"plank":"1:11","row":"10:30"},"55":{"pushups":19,"plank":"1:22","row":"10:20"},"60":{"pushups":21,"plank":"1:32","row":"10:10"},"65":{"pushups":23,"plank":"1:52","row":"9:40"},"70":{"pushups":24,"plank":"2:13","row":"9:10"},"75":{"pushups":27,"plank":"2:33","row":"8:50"},"80":{"pushups":28,"plank":"2:43","row":"8:40"},"85":{"pushups":33,"plank":"2:53","row":"8:30"},"90":{"pushups":37,"plank":"3:04","row":"8:20"},"95":{"pushups":42,"plank":"3:09","row":"8:10"},"100":{"pushups":47,"plank":"3:14","row":"8:00"}},"20-24":{"45":{"pushups":15,"plank":"1:00","row":"10:45"},"50":{"pushups":18,"plank":"1:10","row":"10:35"},"55":{"pushups":19,"plank":"1:20","row":"10:25"},"60":{"pushups":21,"plank":"1:30","row":"10:15"},"65":{"pushups":23,"plank":"1:50","row":"9:45"},"70":{"pushups":24,"plank":"2:10","row":"9:15"},"75":{"pushups":27,"plank":"2:30","row":"8:55"},"80":{"pushups":28,"plank":"2:40","row":"8:45"},"85":{"pushups":33,"plank":"2:50","row":"8:35"},"90":{"pushups":37,"plank":"3:00","row":"8:25"},"95":{"pushups":42,"plank":"3:05","row":"8:15"},"100":{"pushups":47,"plank":"3:10","row":"8:05"}},"25-29":{"45":{"pushups":14,"plank":"0:59","row":"10:50"},"50":{"pushups":17,"plank":"1:09","row":"10:40"},"55":{"pushups":19,"plank":"1:18","row":"10:30"},"60":{"pushups":21,"plank":"1:28","row":"10:20"},"65":{"pushups":23,"plank":"1:48","row":"9:50"},"70":{"pushups":24,"plank":"2:07","row":"9:20"},"75":{"pushups":27,"plank":"2:27","row":"9:00"},"80":{"pushups":28,"plank":"2:37","row":"8:50"},"85":{"pushups":33,"plank":"2:47","row":"8:40"},"90":{"pushups":37,"plank":"2:56","row":"8:30"},"95":{"pushups":42,"plank":"3:01","row":"8:20"},"100":{"pushups":47,"plank":"3:06","row":"8:10"}},"30-34":{"45":{"pushups":11,"plank":"0:58","row":"10:55"},"50":{"pushups":13,"plank":"1:07","row":"10:45"},"55":{"pushups":14,"plank":"1:17","row":"10:35"},"60":{"pushups":15,"plank":"1:26","row":"10:25"},"65":{"pushups":16,"plank":"1:46","row":"9:55"},"70":{"pushups":18,"plank":"2:05","row":"9:25"},"75":{"pushups":19,"plank":"2:24","row":"9:05"},"80":{"pushups":23,"plank":"2:34","row":"8:55"},"85":{"pushups":26,"plank":"2:43","row":"8:45"},"90":{"pushups":33,"plank":"2:53","row":"8:35"},"95":{"pushups":40,"plank":"2:58","row":"8:25"},"100":{"pushups":46,"plank":"3:02","row":"8:15"}},"35-39":{"45":{"pushups":10,"plank":"0:56","row":"11:00"},"50":{"pushups":12,"plank":"1:06","row":"10:50"},"55":{"pushups":13,"plank":"1:15","row":"10:40"},"60":{"pushups":14,"plank":"1:25","row":"10:30"},"65":{"pushups":15,"plank":"1:44","row":"10:00"},"70":{"pushups":17,"plank":"2:02","row":"9:30"},"75":{"pushups":18,"plank":"2:21","row":"9:10"},"80":{"pushups":22,"plank":"2:31","row":"9:00"},"85":{"pushups":25,"plank":"2:40","row":"8:50"},"90":{"pushups":32,"plank":"2:49","row":"8:40"},"95":{"pushups":39,"plank":"2:54","row":"8:30"},"100":{"pushups":42,"plank":"2:59","row":"8:20"}},"40-44":{"45":{"pushups":8,"plank":"0:55","row":"11:05"},"50":{"pushups":11,"plank":"1:05","row":"10:55"},"55":{"pushups":12,"plank":"1:14","row":"10:45"},"60":{"pushups":13,"plank":"1:23","row":"10:35"},"65":{"pushups":14,"plank":"1:41","row":"10:05"},"70":{"pushups":15,"plank":"2:00","row":"9:35"},"75":{"pushups":16,"plank":"2:18","row":"9:15"},"80":{"pushups":18,"plank":"2:28","row":"9:05"},"85":{"pushups":23,"plank":"2:37","row":"8:55"},"90":{"pushups":29,"plank":"2:46","row":"8:45"},"95":{"pushups":33,"plank":"2:51","row":"8:35"},"100":{"pushups":38,"plank":"2:55","row":"8:25"}},"45-49":{"45":{"pushups":7,"plank":"0:54","row":"11:10"},"50":{"pushups":10,"plank":"1:03","row":"11:00"},"55":{"pushups":11,"plank":"1:12","row":"10:50"},"60":{"pushups":12,"plank":"1:21","row":"10:40"},"65":{"pushups":13,"plank":"1:39","row":"10:10"},"70":{"pushups":14,"plank":"1:58","row":"9:40"},"75":{"pushups":15,"plank":"2:16","row":"9:20"},"80":{"pushups":17,"plank":"2:25","row":"9:10"},"85":{"pushups":22,"plank":"2:34","row":"9:00"},"90":{"pushups":27,"plank":"2:43","row":"8:50"},"95":{"pushups":32,"plank":"2:47","row":"8:40"},"100":{"pushups":37,"plank":"2:52","row":"8:30"}},"50-54":{"45":{"pushups":6,"plank":"0:53","row":"11:15"},"50":{"pushups":9,"plank":"1:02","row":"11:05"},"55":{"pushups":10,"plank":"1:11","row":"10:55"},"60":{"pushups":11,"plank":"1:20","row":"10:45"},"65":{"pushups":12,"plank":"1:37","row":"10:15"},"70":{"pushups":13,"plank":"1:55","row":"9:45"},"75":{"pushups":14,"plank":"2:13","row":"9:25"},"80":{"pushups":15,"plank":"2:22","row":"9:15"},"85":{"pushups":20,"plank":"2:31","row":"9:05"},"90":{"pushups":25,"plank":"2:39","row":"8:55"},"95":{"pushups":30,"plank":"2:44","row":"8:45"},"100":{"pushups":35,"plank":"2:48","row":"8:35"}},"55-59":{"45":{"pushups":5,"plank":"0:52","row":"11:20"},"50":{"pushups":8,"plank":"1:01","row":"11:10"},"55":{"pushups":9,"plank":"1:09","row":"11:00"},"60":{"pushups":10,"plank":"1:18","row":"10:50"},"65":{"pushups":11,"plank":"1:35","row":"10:20"},"70":{"pushups":12,"plank":"1:53","row":"9:50"},"75":{"pushups":13,"plank":"2:10","row":"9:30"},"80":{"pushups":14,"plank":"2:19","row":"9:20"},"85":{"pushups":19,"plank":"2:28","row":"9:10"},"90":{"pushups":22,"plank":"2:36","row":"9:00"},"95":{"pushups":24,"plank":"2:41","row":"8:50"},"100":{"pushups":28,"plank":"2:45","row":"8:40"}},"60-64":{"45":{"pushups":4,"plank":"0:51","row":"11:25"},"50":{"pushups":7,"plank":"1:00","row":"11:15"},"55":{"pushups":8,"plank":"1:08","row":"11:05"},"60":{"pushups":10,"plank":"1:17","row":"10:55"},"65":{"pushups":11,"plank":"1:34","row":"10:25"},"70":{"pushups":12,"plank":"1:51","row":"9:55"},"75":{"pushups":13,"plank":"2:08","row":"9:35"},"80":{"pushups":14,"plank":"2:16","row":"9:25"},"85":{"pushups":15,"plank":"2:25","row":"9:15"},"90":{"pushups":17,"plank":"2:33","row":"9:05"},"95":{"pushups":19,"plank":"2:37","row":"8:55"},"100":{"pushups":21,"plank":"2:42","row":"8:45"}},"65+":{"45":{"pushups":4,"plank":"0:50","row":"11:30"},"50":{"pushups":7,"plank":"0:58","row":"11:20"},"55":{"pushups":8,"plank":"1:07","row":"11:10"},"60":{"pushups":10,"plank":"1:15","row":"11:00"},"65":{"pushups":11,"plank":"1:32","row":"10:30"},"70":{"pushups":12,"plank":"1:48","row":"10:00"},"75":{"pushups":13,"plank":"2:05","row":"9:40"},"80":{"pushups":14,"plank":"2:13","row":"9:30"},"85":{"pushups":15,"plank":"2:22","row":"9:20"},"90":{"pushups":17,"plank":"2:30","row":"9:10"},"95":{"pushups":19,"plank":"2:34","row":"9:00"},"100":{"pushups":21,"plank":"2:38","row":"8:50"}}},"male":{"17-19":{"45":{"pushups":30,"plank":"1:11","row":"9:20"},"50":{"pushups":33,"plank":"1:22","row":"9:10"},"55":{"pushups":35,"plank":"1:32","row":"9:00"},"60":{"pushups":37,"plank":"1:42","row":"8:50"},"65":{"pushups":39,"plank":"2:02","row":"8:30"},"70":{"pushups":41,"plank":"2:23","row":"8:10"},"75":{"pushups":44,"plank":"2:43","row":"7:50"},"80":{"pushups":47,"plank":"2:53","row":"7:40"},"85":{"pushups":52,"plank":"3:04","row":"7:30"},"90":{"pushups":57,"plank":"3:14","row":"7:20"},"95":{"pushups":62,"plank":"3:19","row":"7:10"},"100":{"pushups":67,"plank":"3:24","row":"7:00"}},"20-24":{"45":{"pushups":30,"plank":"1:10","row":"9:25"},"50":{"pushups":33,"plank":"1:20","row":"9:15"},"55":{"pushups":35,"plank":"1:30","row":"9:05"},"60":{"pushups":37,"plank":"1:40","row":"8:55"},"65":{"pushups":39,"plank":"2:00","row":"8:35"},"70":{"pushups":41,"plank":"2:20","row":"8:15"},"75":{"pushups":44,"plank":"2:40","row":"7:55"},"80":{"pushups":47,"plank":"2:50","row":"7:45"},"85":{"pushups":52,"plank":"3:00","row":"7:35"},"90":{"pushups":57,"plank":"3:10","row":"7:25"},"95":{"pushups":62,"plank":"3:15","row":"7:15"},"100":{"pushups":67,"plank":"3:20","row":"7:05"}},"25-29":{"45":{"pushups":27,"plank":"1:09","row":"9:30"},"50":{"pushups":30,"plank":"1:18","row":"9:20"},"55":{"pushups":32,"plank":"1:28","row":"9:10"},"60":{"pushups":34,"plank":"1:38","row":"9:00"},"65":{"pushups":36,"plank":"1:58","row":"8:40"},"70":{"pushups":38,"plank":"2:17","row":"8:20"},"75":{"pushups":41,"plank":"2:37","row":"8:00"},"80":{"pushups":44,"plank":"2:47","row":"7:50"},"85":{"pushups":48,"plank":"2:56","row":"7:40"},"90":{"pushups":54,"plank":"3:06","row":"7:30"},"95":{"pushups":59,"plank":"3:11","row":"7:20"},"100":{"pushups":62,"plank":"3:16","row":"7:10"}},"30-34":{"45":{"pushups":24,"plank":"1:07","row":"9:35"},"50":{"pushups":27,"plank":"1:17","row":"9:25"},"55":{"pushups":29,"plank":"1:26","row":"9:15"},"60":{"pushups":30,"plank":"1:36","row":"9:05"},"65":{"pushups":31,"plank":"1:55","row":"8:45"},"70":{"pushups":34,"plank":"2:14","row":"8:25"},"75":{"pushups":36,"plank":"2:34","row":"8:05"},"80":{"pushups":39,"plank":"2:43","row":"7:55"},"85":{"pushups":41,"plank":"2:53","row":"7:45"},"90":{"pushups":46,"plank":"3:02","row":"7:35"},"95":{"pushups":52,"plank":"3:07","row":"7:25"},"100":{"pushups":57,"plank":"3:12","row":"7:15"}},"35-39":{"45":{"pushups":21,"plank":"1:06","row":"9:40"},"50":{"pushups":24,"plank":"1:15","row":"9:30"},"55":{"pushups":26,"plank":"1:25","row":"9:20"},"60":{"pushups":27,"plank":"1:34","row":"9:10"},"65":{"pushups":28,"plank":"1:53","row":"8:50"},"70":{"pushups":31,"plank":"2:12","row":"8:30"},"75":{"pushups":33,"plank":"2:31","row":"8:10"},"80":{"pushups":36,"plank":"2:40","row":"8:00"},"85":{"pushups":38,"plank":"2:49","row":"7:50"},"90":{"pushups":43,"plank":"2:59","row":"7:40"},"95":{"pushups":49,"plank":"3:04","row":"7:30"},"100":{"pushups":51,"plank":"3:08","row":"7:20"}},"40-44":{"45":{"pushups":18,"plank":"1:05","row":"9:45"},"50":{"pushups":21,"plank":"1:14","row":"9:35"},"55":{"pushups":22,"plank":"1:23","row":"9:25"},"60":{"pushups":24,"plank":"1:32","row":"9:15"},"65":{"pushups":25,"plank":"1:51","row":"8:55"},"70":{"pushups":26,"plank":"2:09","row":"8:35"},"75":{"pushups":29,"plank":"2:28","row":"8:15"},"80":{"pushups":30,"plank":"2:37","row":"8:05"},"85":{"pushups":34,"plank":"2:46","row":"7:55"},"90":{"pushups":36,"plank":"2:55","row":"7:45"},"95":{"pushups":40,"plank":"3:00","row":"7:35"},"100":{"pushups":44,"plank":"3:04","row":"7:25"}},"45-49":{"45":{"pushups":15,"plank":"1:03","row":"9:50"},"50":{"pushups":18,"plank":"1:12","row":"9:40"},"55":{"pushups":20,"plank":"1:21","row":"9:30"},"60":{"pushups":22,"plank":"1:30","row":"9:20"},"65":{"pushups":24,"plank":"1:48","row":"9:00"},"70":{"pushups":25,"plank":"2:07","row":"8:40"},"75":{"pushups":28,"plank":"2:25","row":"8:20"},"80":{"pushups":29,"plank":"2:34","row":"8:10"},"85":{"pushups":33,"plank":"2:43","row":"8:00"},"90":{"pushups":35,"plank":"2:52","row":"7:50"},"95":{"pushups":39,"plank":"2:56","row":"7:40"},"100":{"pushups":44,"plank":"3:01","row":"7:30"}},"50-54":{"45":{"pushups":12,"plank":"1:02","row":"9:55"},"50":{"pushups":15,"plank":"1:11","row":"9:45"},"55":{"pushups":17,"plank":"1:20","row":"9:35"},"60":{"pushups":19,"plank":"1:29","row":"9:25"},"65":{"pushups":21,"plank":"1:46","row":"9:05"},"70":{"pushups":22,"plank":"2:04","row":"8:45"},"75":{"pushups":23,"plank":"2:22","row":"8:25"},"80":{"pushups":24,"plank":"2:31","row":"8:15"},"85":{"pushups":26,"plank":"2:39","row":"8:05"},"90":{"pushups":29,"plank":"2:48","row":"7:55"},"95":{"pushups":33,"plank":"2:53","row":"7:45"},"100":{"pushups":36,"plank":"2:57","row":"7:35"}},"55-59":{"45":{"pushups":12,"plank":"1:01","row":"10:00"},"50":{"pushups":15,"plank":"1:09","row":"9:50"},"55":{"pushups":16,"plank":"1:18","row":"9:40"},"60":{"pushups":18,"plank":"1:27","row":"9:30"},"65":{"pushups":20,"plank":"1:44","row":"9:10"},"70":{"pushups":21,"plank":"2:02","row":"8:50"},"75":{"pushups":22,"plank":"2:19","row":"8:30"},"80":{"pushups":23,"plank":"2:28","row":"8:20"},"85":{"pushups":25,"plank":"2:36","row":"8:10"},"90":{"pushups":28,"plank":"2:45","row":"8:00"},"95":{"pushups":30,"plank":"2:49","row":"7:50"},"100":{"pushups":33,"plank":"2:54","row":"7:40"}},"60-64":{"45":{"pushups":11,"plank":"1:00","row":"10:05"},"50":{"pushups":14,"plank":"1:08","row":"9:55"},"55":{"pushups":16,"plank":"1:17","row":"9:45"},"60":{"pushups":18,"plank":"1:25","row":"9:35"},"65":{"pushups":20,"plank":"1:42","row":"9:15"},"70":{"pushups":21,"plank":"1:59","row":"8:55"},"75":{"pushups":22,"plank":"2:16","row":"8:35"},"80":{"pushups":23,"plank":"2:25","row":"8:25"},"85":{"pushups":24,"plank":"2:33","row":"8:15"},"90":{"pushups":26,"plank":"2:42","row":"8:05"},"95":{"pushups":28,"plank":"2:46","row":"7:55"},"100":{"pushups":30,"plank":"2:50","row":"7:45"}},"65+":{"45":{"pushups":11,"plank":"0:58","row":"10:10"},"50":{"pushups":14,"plank":"1:07","row":"10:00"},"55":{"pushups":16,"plank":"1:15","row":"9:50"},"60":{"pushups":18,"plank":"1:23","row":"9:40"},"65":{"pushups":20,"plank":"1:40","row":"9:20"},"70":{"pushups":21,"plank":"1:57","row":"9:00"},"75":{"pushups":22,"plank":"2:13","row":"8:40"},"80":{"pushups":23,"plank":"2:22","row":"8:30"},"85":{"pushups":24,"plank":"2:30","row":"8:20"},"90":{"pushups":26,"plank":"2:38","row":"8:10"},"95":{"pushups":28,"plank":"2:43","row":"8:00"},"100":{"pushups":30,"plank":"2:47","row":"7:50"}}}};
