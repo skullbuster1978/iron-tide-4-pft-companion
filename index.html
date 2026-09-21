@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IRON TIDE 4 | 12-Week USCG PFT Companion</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
@@ -14,162 +11,124 @@
 </head>
 <body>
 
-<header class="masthead">
-  <div class="kicker">USCG PFT TRAINING PROGRAM</div>
-  <h1>IRON TIDE 4</h1>
-  <div class="sub">12-Week USCG PFT Companion</div>
+<header class="mast">
+  <div class="mast-in">
+    <button class="brand" data-action="brand" aria-label="IRON TIDE 4 home">
+      <span class="brand-name">IRON TIDE 4</span><span class="brand-ver">V30</span>
+    </button>
+    <div class="tagline">X3 &bull; ROW &bull; PUSH &bull; PLANK</div>
+    <nav class="dnav" id="dnav" aria-label="Views">
+      <button data-action="tab" data-tab="training" class="active">Training</button>
+      <button data-action="tab" data-tab="calculator">Target calculator</button>
+      <button data-action="tab" data-tab="progress">Progress</button>
+      <button data-action="tab" data-tab="testplan">Test plan</button>
+      <button data-action="tab" data-tab="account">Account</button>
+    </nav>
+    <button class="acctbtn" id="acctBtn" data-action="tab" data-tab="account"
+      aria-label="Open account. Local only"><span class="dot"></span><span id="acctBtnLabel">SIGN IN TO SYNC</span></button>
+  </div>
 </header>
 
-<div class="missionbar">
-  <div class="pill"><span class="label">MISSION</span>35 push-ups &middot; 2:52 plank &middot; 7:50 row</div>
-  <div class="pill"><span class="label">PROFILE</span>Male 45&ndash;49 &middot; 90 pts/event &middot; 270 total</div>
-  <div id="cloudStatus">CLOUD: OFF</div>
+<div class="mission">
+  <div class="mission-in">
+    <button class="mbtn" data-action="tab" data-tab="calculator" aria-label="Edit mission in target calculator">
+      <span class="mbtn-main">MISSION</span><span class="mbtn-edit">EDIT</span>
+    </button>
+    <div class="mtargets" id="missionTargets">35 PUSH-UPS &middot; 2:52 PLANK &middot; 7:50 ROW</div>
+    <div class="mprofile" id="missionProfile">Male 45-49 &middot; 90 pts/event &middot; 270 total</div>
+    <div class="cloud" id="cloudStatus">CLOUD: OFF</div>
+  </div>
 </div>
 
-<nav class="tabs" id="tabs">
-  <button data-action="tab" data-tab="training" class="active">Training</button>
-  <button data-action="tab" data-tab="calculator">Target Calculator</button>
-  <button data-action="tab" data-tab="progress">Progress</button>
-  <button data-action="tab" data-tab="testplan">Test Plan</button>
-  <button data-action="tab" data-tab="account">Account</button>
-</nav>
+<main class="page">
 
-<main>
   <!-- TRAINING -->
   <section class="tabpane active" id="tab-training">
-    <div class="weekrail" id="weekRail"></div>
-    <div class="phasebanner" id="phaseBanner"></div>
-    <div class="weekcount" id="weekCount"></div>
-    <div class="sessions" id="sessions"></div>
-
-    <div class="panel">
-      <h2>Training Numbers</h2>
-      <div class="row3">
-        <div class="field"><label>Best push-ups (reps)</label><input id="numPushups" inputmode="numeric" placeholder="e.g. 32"></div>
-        <div class="field"><label>Best plank (m:ss)</label><input id="numPlank" placeholder="e.g. 2:40"></div>
-        <div class="field"><label>Best 2,000 m row (m:ss)</label><input id="numRow" placeholder="e.g. 8:05"></div>
+    <div class="train-grid">
+      <aside class="rail" aria-label="Weeks">
+        <div class="rail-label">12-WEEK COURSE</div>
+        <div id="weekRail"></div>
+      </aside>
+      <div class="work">
+        <div class="hero">
+          <div class="eyebrow" id="heroEyebrow">WEEK 01 &middot; FOUNDATION</div>
+          <h1 id="heroGoal"></h1>
+          <p class="hero-sub">Concept2 rowing: three required sessions plus an optional fourth.
+            Wednesday and Friday: follow the guided stretch routine. Sunday: rest.
+            <a id="planLink" href="https://www.concept2.com/training/plans/2k-erg-test-12-week" target="_blank" rel="noopener">Official plan &#8599;</a>
+          </p>
+          <div class="ringwrap">
+            <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+              <circle cx="60" cy="60" r="52" class="ring-bg"/>
+              <circle cx="60" cy="60" r="52" class="ring-fg" id="ringFg"/>
+            </svg>
+            <div class="ring-txt"><span id="ringNum">0 / 18</span><span class="ring-cap">WEEK TASKS</span></div>
+          </div>
+        </div>
+        <div class="daytabs" role="tablist" aria-label="Training days" id="dayTabs"></div>
+        <div class="sesscard" id="sessCard"></div>
       </div>
-      <button class="primary" data-action="save-numbers">Save numbers</button>
-      <span id="numbersSaved" style="margin-left:10px;color:var(--green);font-family:var(--mono);font-size:12px;"></span>
+      <aside class="intel" id="intelCol" aria-label="Training intel"></aside>
     </div>
-
-    <div class="links">
-      <a href="https://www.concept2.com/training/plans/2k-erg-test-12-week" target="_blank" rel="noopener">Concept2 2K 12-week plan</a>
-      <a href="https://www.youtube.com/watch?v=wzyWHYqidBY" target="_blank" rel="noopener">X3 example video</a>
-      <a href="https://www.youtube.com/watch?v=B9uY01NoqBg" target="_blank" rel="noopener">Guided stretch routine</a>
-    </div>
-    <p class="fineprint">Weekly rhythm: Concept2 rowing &mdash; three required sessions plus an optional fourth. Wednesday and Friday: follow the guided stretch routine. Sunday: rest.</p>
   </section>
 
   <!-- TARGET CALCULATOR -->
   <section class="tabpane" id="tab-calculator">
-    <div class="panel" style="margin-top:0">
-      <h2>Target Calculator &mdash; Male 45&ndash;49</h2>
-      <p class="fineprint" style="margin-top:0">Enter your numbers to score them against the USCG PFT tables. Mission target: 90 pts per event, 270 total.</p>
-      <div class="row3">
-        <div class="field"><label>Push-ups (reps)</label><input id="calcPushups" inputmode="numeric" value="35"></div>
-        <div class="field"><label>Plank (m:ss)</label><input id="calcPlank" value="2:52"></div>
-        <div class="field"><label>2,000 m row (m:ss)</label><input id="calcRow" value="7:50"></div>
-      </div>
-      <button class="primary" data-action="calc">Score it</button>
-      <div class="scoregrid" id="scoreGrid" style="display:none">
-        <div class="scorecard"><div class="ev">PUSH-UPS</div><div class="pts" id="ptsPush">0</div><div class="inp" id="inpPush"></div></div>
-        <div class="scorecard"><div class="ev">PLANK</div><div class="pts" id="ptsPlank">0</div><div class="inp" id="inpPlank"></div></div>
-        <div class="scorecard"><div class="ev">2,000 M ROW</div><div class="pts" id="ptsRow">0</div><div class="inp" id="inpRow"></div></div>
-      </div>
-      <div class="totalbar" id="totalBar" style="display:none">TOTAL &nbsp;<span class="total" id="ptsTotal">0</span><span style="color:var(--muted)"> / 300 &nbsp;·&nbsp; mission: 270</span></div>
-      <p class="fineprint">Reference tables for planning only. Verify against the current official USCG PFT instruction before test day.</p>
-    </div>
+    <div id="calcRoot"></div>
   </section>
 
   <!-- PROGRESS -->
   <section class="tabpane" id="tab-progress">
-    <div class="panel" style="margin-top:0">
-      <h2>Readiness Log</h2>
-      <p class="fineprint" style="margin-top:0">Log how you show up each day. Trends here tell you when to push and when to back off.</p>
-      <div class="row3">
-        <div class="field"><label>Date</label><input id="logDate" type="date"></div>
-        <div class="field"><label>Sleep (hours)</label><input id="logSleep" inputmode="decimal" placeholder="7.5"></div>
-        <div class="field"><label>Soreness (1&ndash;5)</label>
-          <select id="logSore"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
-        </div>
-      </div>
-      <div class="row3">
-        <div class="field"><label>Energy (1&ndash;5)</label>
-          <select id="logEnergy"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
-        </div>
-        <div class="field" style="grid-column: span 2"><label>Notes</label><input id="logNotes" placeholder="How did the session go?"></div>
-      </div>
-      <button class="primary" data-action="add-readiness">Add entry</button>
-    </div>
-    <div class="panel">
-      <h2>Log Entries</h2>
-      <div id="readinessList"></div>
-    </div>
+    <div id="progRoot"></div>
   </section>
 
   <!-- TEST PLAN -->
-  <section class="tabpane testplan" id="tab-testplan">
-    <h2 style="font-family:var(--mono);letter-spacing:3px;color:var(--gold);font-size:14px;">TEST-DAY PLAN</h2>
-    <h3>48 hours out</h3>
-    <ul>
-      <li>Last real session is behind you. Easy movement only.</li>
-      <li>Eat normally. Hydrate steadily — don't try to catch up the morning of.</li>
-      <li>Lay out everything: workout gear, watch, water, snack.</li>
-    </ul>
-    <h3>Night before</h3>
-    <ul>
-      <li>Normal dinner, nothing experimental.</li>
-      <li>Set two alarms. Screens off 30 minutes before bed.</li>
-      <li>Review your pacing plan once, then let it go.</li>
-    </ul>
-    <h3>Morning of</h3>
-    <ul>
-      <li>Wake 2.5–3 hours before the test. Eat a familiar breakfast.</li>
-      <li>Water early, then sip. Bathroom stops planned, not panicked.</li>
-      <li>Arrive early. Own your warm-up space.</li>
-    </ul>
-    <h3>Warm-up (20 min)</h3>
-    <ul>
-      <li>5 min easy row — conversational pace.</li>
-      <li>Dynamic moves: leg swings, arm circles, inchworms, bodyweight squats.</li>
-      <li>2 × 10 push-ups at test cadence. 2 × 0:30 plank. 3 × 10-stroke row pickups.</li>
-    </ul>
-    <h3>Event order &amp; pacing</h3>
-    <ul>
-      <li><b>Push-ups (2:00):</b> steady cadence from the first rep. Don't sprint the first 30 seconds — that's where tests are lost.</li>
-      <li><b>Plank:</b> one long effort. Breathe slow, hips level, eyes down.</li>
-      <li><b>2,000 m row:</b> controlled start, build through the second 500, push the third 500, empty the tank in the last 500.</li>
-    </ul>
-    <h3>After</h3>
-    <ul>
-      <li>Easy 10 min row or walk to cool down. Log your scores immediately while fresh.</li>
-      <li>270 is the mission. Whatever the number — you did the twelve weeks.</li>
-    </ul>
+  <section class="tabpane" id="tab-testplan">
+    <div class="testwrap">
+      <div class="eyebrow">TEST DAY &middot; KEEP IT SIMPLE</div>
+      <h1>One calm rep. One clean split.</h1>
+      <p class="lede">Use the same form and rower setup you used in practice. Follow your PRL&rsquo;s directions.</p>
+      <div class="testgrid">
+        <div class="testcard">
+          <div class="testnum">01 &middot; PUSH-UPS</div>
+          <div class="testbig">39</div>
+          <div class="testmid">13 / 13 / 13</div>
+          <p>Three 20-second blocks. Body straight, 90-degree elbow bend, finish with straight arms without locking.</p>
+        </div>
+        <div class="testcard">
+          <div class="testnum">02 &middot; PLANK</div>
+          <div class="testbig">3:01</div>
+          <div class="testmid">BRACE &middot; BREATHE &middot; HOLD</div>
+          <p>Elbows under shoulders. One straight line from head to heels. Look down and do not clasp your hands.</p>
+        </div>
+        <div class="testcard">
+          <div class="testnum">03 &middot; 2,000 M ROW</div>
+          <div class="testbig">7:50</div>
+          <div class="split-row"><b>1:59</b><b>1:58</b><b>1:57</b><b>1:56</b></div>
+          <p>Stay controlled for 1,500 m. Speed up through the final 250 m and row all the way to 2,000 m.</p>
+        </div>
+      </div>
+      <div class="stopcard">
+        <div class="testnum">STOP SIGNALS</div>
+        <p>Stop for chest pressure, faintness, unusual trouble breathing, or sharp pain. Get medical clearance before starting or increasing exercise if you have a heart, joint, or back condition.</p>
+      </div>
+    </div>
   </section>
 
   <!-- ACCOUNT -->
   <section class="tabpane" id="tab-account">
-    <div id="setupNotice"></div>
-    <div id="guestNotice"></div>
-    <div class="panel" style="margin-top:0" id="authPanel">
-      <h2>Cloud Login</h2>
-      <div id="authStatus" style="font-family:var(--mono);font-size:13px;margin-bottom:12px;color:var(--muted)">Not logged in.</div>
-      <div id="authForm">
-        <div class="field"><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email"></div>
-        <div class="field"><label>Password</label><input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
-        <button class="primary" data-action="signup">Sign up</button>
-        <button class="ghost" data-action="login" style="margin-left:8px">Log in</button>
-        <div id="authMsg" style="margin-top:10px;font-size:13px;font-family:var(--mono)"></div>
-      </div>
-      <div id="logoutWrap" style="display:none">
-        <button class="ghost" data-action="logout">Log out</button>
-      </div>
-    </div>
+    <div id="acctRoot"></div>
   </section>
+
 </main>
 
-<footer>IRON TIDE 4 &middot; EARN THE 270</footer>
+<nav class="bnav" id="bnav" aria-label="Views">
+  <button data-action="tab" data-tab="training" class="active"><span class="bi">TR</span>Training</button>
+  <button data-action="tab" data-tab="calculator"><span class="bi">TC</span>Calculator</button>
+  <button data-action="tab" data-tab="progress"><span class="bi">PR</span>Progress</button>
+  <button data-action="tab" data-tab="testplan"><span class="bi">TP</span>Test plan</button>
+  <button data-action="tab" data-tab="account"><span class="bi">AC</span>Account</button>
+</nav>
 
 <script src="app.js"></script>
 </body>
