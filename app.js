@@ -209,27 +209,6 @@
     var ps = plankSecs();
     return ps == null ? null : Math.round(ps * frac);
   }
-  function plankNote() {
-    var ps = plankSecs();
-    return ps == null ? "Enter your best plank hold to personalize"
-      : String(state.numbers.plank).trim() + " plank";
-  }
-  /* Scale every M:SS in a plank detail by the level factor (needs valid plank).
-   * Monday scales every M:SS in the merged card; Thursday/Saturday scale only the
-   * "N × M:SS plank" portion — push-up times are left intact. */
-  function scalePlankAll(detail, frac) {
-    var hold = plankHoldFor(frac);
-    if (hold == null) return detail;
-    return String(detail).replace(/\d+:[0-5]\d/g, fmtMSS(hold));
-  }
-  function scalePlankSeg(detail, frac) {
-    var hold = plankHoldFor(frac);
-    if (hold == null) return detail;
-    return String(detail).split(" · ").map(function (seg) {
-      return /plank/i.test(seg) ? seg.replace(/\d+:[0-5]\d/g, fmtMSS(hold)) : seg;
-    }).join(" · ");
-  }
-
   /* ================= session builder ================= */
   var DAY_ABBR = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
   var DAY_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -257,27 +236,18 @@
     var reps = repsFor(info.frac);
     return {
       icon: "PU",
-      title: "Push-ups + plank",
-      detail: sets + " × " + reps + " push-ups (" + lvl + ") · " + scalePlankAll(wk.mon.plank, info.frac),
-      meta: "Complete both before the row · " + info.name + " " + info.pct + "% of your best"
+      title: "Push-ups",
+      detail: sets + " × " + reps + " push-ups (" + lvl + ")",
+      meta: "Complete before the row · " + info.name + " " + info.pct + "% of your best"
     };
   }
   function thuPP(p) {
     var reps = repsFor(LEVELS.easy.frac);
     return {
-      icon: p.icon,
-      title: p.title,
-      detail: scalePlankSeg(p.push + " · " + p.plank, LEVELS.easy.frac),
-      meta: (p.meta ? p.meta + " · " : "") + "Easy 40% · " + reps + " push-ups · " + plankNote()
-    };
-  }
-  function satPlank(s) {
-    var reps = repsFor(LEVELS.easy.frac);
-    return {
-      icon: s.plank.icon,
-      title: s.plank.title,
-      detail: scalePlankSeg(s.plank.detail, LEVELS.easy.frac),
-      meta: (s.plank.meta ? s.plank.meta + " · " : "") + "Easy 40% · " + reps + " push-ups · " + plankNote()
+      icon: "PU",
+      title: "Push-ups",
+      detail: p.push,
+      meta: (p.meta ? p.meta + " · " : "") + "Easy 40% · " + reps + " push-ups"
     };
   }
   function checkinTasks(wi) {
@@ -346,14 +316,9 @@
     }
     if (st.testPP) return { name: st.name, tasks: PLAN.testPP };
     var stasks = [];
-    if (st.x3 && st.plank && !st.rx) {
-      stasks = [x3Task(st.x3), satPlank(st), matrixTask(mxr.d4)];
-    } else {
-      if (st.plank) stasks.push(satPlank(st));
-      if (st.x3) stasks.push(x3Task(st.x3));
-      if (st.rx) stasks.push(rxTask(st.rx));
-      stasks.push(matrixTask(mxr.d4));
-    }
+    if (st.x3) stasks.push(x3Task(st.x3));
+    if (st.rx) stasks.push(rxTask(st.rx));
+    stasks.push(matrixTask(mxr.d4));
     var ptC = plankTask(wi, "C");
     if (ptC) stasks.push(ptC);
     return { name: st.name, tasks: stasks };
