@@ -539,3 +539,29 @@ table.stable { width: 100%; border-collapse: collapse; font-size: 14px; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* ---------- plank progression ---------- */
+.pw-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+  margin: 0 0 18px;
+}
+.pwbtn {
+  background: var(--paper); border: 1px solid var(--ink); padding: 8px 6px;
+  text-align: center; box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 2px; align-items: center;
+}
+.pwbtn:hover { background: var(--blue); }
+.pwbtn.active { background: var(--navy); color: var(--cream); }
+.pwnum { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+.pwphase { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; line-height: 1.3; }
+.pwtasks { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.pwbtn.active .pwtasks { color: var(--gold); }
+.plist { margin: 8px 0 0; padding-left: 20px; }
+.plist li { margin: 6px 0; }
+.plist b { color: var(--navy); }
+@media (max-width: 700px) {
+  .pw-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 520px) {
+  .pw-grid { grid-template-columns: repeat(3, 1fr); }
+}
