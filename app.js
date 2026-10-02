@@ -8,6 +8,7 @@
 
   var CFG = window.IRON_TIDE_CONFIG || {};
   var PLAN = window.IRON_TIDE_PLAN || {};
+  var PLANK = window.IRON_TIDE_PLANK || { weeks: [] };
   var TABLES = window.IRON_TIDE_TABLES || { male: {}, female: {} };
   var LS_KEY = "ironTide4.v1";
   var REM_KEY = "iron-tide-4-reminders";
@@ -19,7 +20,7 @@
     return {
       checks: {},
       numbers: { pushups: "30", plank: "", row: "8:10", readiness: [] },
-      settings: { week: 1, day: 0 },
+      settings: { week: 1, day: 0, plankWeek: 1 },
       calc: {
         sex: "male", age: "45-49",
         scores: { push: 90, plank: 90, row: 90 },
@@ -56,6 +57,7 @@
     if (s.settings && typeof s.settings === "object") {
       if (s.settings.week) b.settings.week = s.settings.week;
       if (s.settings.day != null) b.settings.day = Math.min(5, Math.max(0, s.settings.day | 0));
+      if (s.settings.plankWeek) b.settings.plankWeek = s.settings.plankWeek;
     }
     if (s.calc && typeof s.calc === "object") {
       if (s.calc.sex === "female" || s.calc.sex === "male") b.calc.sex = s.calc.sex;
@@ -78,6 +80,7 @@
       });
     }
     if (b.settings.week < 1 || b.settings.week > 12) b.settings.week = 1;
+    if (b.settings.plankWeek < 1 || b.settings.plankWeek > 12) b.settings.plankWeek = 1;
     return b;
   }
   function loadLocal() {
@@ -622,6 +625,105 @@
     renderIntel();
   }
 
+  /* ================= plank progression view ================= */
+  function plankId(wi, s) { return "pw" + pad2(wi + 1) + String(s).toLowerCase(); }
+  function countPlank() {
+    var done = 0, total = 0, wi, i;
+    for (wi = 0; wi < PLANK.weeks.length; wi++) {
+      var ss = PLANK.weeks[wi].sessions;
+      for (i = 0; i < ss.length; i++) {
+        total++;
+        if (state.checks[plankId(wi, ss[i].s)]) done++;
+      }
+    }
+    return { done: done, total: total };
+  }
+  function plankInfoHtml() {
+    var P = PLANK, html = "";
+    var i;
+    html += '<div class="icard"><h3>FORM CHECKLIST</h3><ul class="plist">';
+    for (i = 0; i < P.form.length; i++) {
+      html += "<li><b>" + esc(P.form[i][0]) + ".</b> " + esc(P.form[i][1]) + "</li>";
+    }
+    html += "</ul></div>";
+    html += '<div class="icard"><h3>4-MINUTE SETUP · BEFORE EACH SESSION</h3><ul class="plist">';
+    for (i = 0; i < P.setup.length; i++) html += "<li>" + esc(P.setup[i]) + "</li>";
+    html += "</ul></div>";
+    html += '<div class="icard"><h3>SCALING RULE</h3><p class="fineprint">' + esc(P.scaling) + "</p>" +
+      '<p class="fineprint">This plan assumes a clean baseline of at least 1:15.</p></div>';
+    html += '<div class="icard"><h3>CHECKPOINT LADDER</h3><ul class="plist">';
+    for (i = 0; i < P.checkpoints.length; i++) {
+      html += "<li><b>" + esc(P.checkpoints[i][0]) + " — " + esc(P.checkpoints[i][1]) +
+        ".</b> " + esc(P.checkpoints[i][2]) + "</li>";
+    }
+    html += "</ul></div>";
+    html += '<div class="icard"><h3>STOP RULES</h3><ul class="plist">';
+    for (i = 0; i < P.stopRules.length; i++) html += "<li>" + esc(P.stopRules[i]) + "</li>";
+    html += "</ul></div>";
+    html += '<div class="icard"><h3>TEST DAY</h3><ul class="plist">';
+    for (i = 0; i < P.testDay.length; i++) html += "<li>" + esc(P.testDay[i]) + "</li>";
+    html += "</ul></div>";
+    return html;
+  }
+  function renderPlank() {
+    var root = $("plankRoot");
+    if (!root || !PLANK.weeks.length) return;
+    var wi = Math.min(PLANK.weeks.length - 1,
+      Math.max(0, (state.settings.plankWeek || 1) - 1));
+    var wk = PLANK.weeks[wi];
+    var c = countPlank();
+    var pct = c.total ? Math.round(c.done / c.total * 100) : 0;
+
+    var html = '<div class="proghead"><div class="eyebrow">12-WEEK PLANK PROGRESSION &middot; TO 3:01</div>' +
+      "<h1>Own the position. Prove the hold.</h1>" +
+      '<p class="progintro">Three focused sessions per week, 48 hours apart. ' +
+      "Every second only counts when it is clean — stop the timer on the first form break.</p></div>";
+
+    html += '<div class="pw-grid">';
+    for (var i = 0; i < PLANK.weeks.length; i++) {
+      var w = PLANK.weeks[i], wd = 0;
+      for (var k = 0; k < w.sessions.length; k++) {
+        if (state.checks[plankId(i, w.sessions[k].s)]) wd++;
+      }
+      html += '<button class="pwbtn' + (i === wi ? " active" : "") +
+        '" data-action="plank-week" data-week="' + (i + 1) +
+        '" aria-label="Open plank week ' + (i + 1) + '">' +
+        '<span class="pwnum">' + pad2(i + 1) + "</span>" +
+        '<span class="pwphase">' + esc(w.phase) + "</span>" +
+        '<span class="pwtasks">' + wd + "/3 done</span></button>";
+    }
+    html += "</div>";
+
+    html += '<div class="sesscard"><div class="sess-eyebrow">WEEK ' + pad2(wk.n) +
+      " &middot; " + esc(wk.phase) + "</div><h2>" + esc(wk.title) + "</h2>" +
+      '<div class="tasks">';
+    for (var t = 0; t < wk.sessions.length; t++) {
+      var s = wk.sessions[t];
+      var id = plankId(wi, s.s);
+      var isDone = !!state.checks[id];
+      html += '<article class="task' + (isDone ? " done" : "") + '">' +
+        '<span class="tbadge">PP</span><div class="tbody">' +
+        '<div class="ttitle">Session ' + esc(s.s) + "</div>" +
+        '<div class="tdetail">' + esc(s.rx) +
+        (s.rest && s.rest !== "—" ? " · rest " + esc(s.rest) : "") + "</div>" +
+        (s.note ? '<div class="tmeta">' + esc(s.note) + "</div>" : "") + "</div>" +
+        '<button class="switch" role="checkbox" aria-checked="' + isDone +
+        '" aria-label="Mark ' + (isDone ? "incomplete" : "complete") +
+        ": plank week " + (wi + 1) + " session " + esc(s.s) +
+        '" data-action="plank-toggle" data-id="' + id + '"></button></article>';
+    }
+    html += "</div></div>";
+
+    html += '<div class="icard"><h3>PROGRESSION PROOF</h3>' +
+      '<div class="readypct">' + pct + '%</div>' +
+      '<div class="meter"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="ready-sub">' + c.done + " of " + c.total +
+      " plank sessions complete</div></div>";
+
+    html += plankInfoHtml();
+    root.innerHTML = html;
+  }
+
   /* ================= stopwatch (one global timer) ================= */
   var sw = { elapsed: 0, running: false, last: 0, timer: null };
   function swFmt(ms) {
@@ -1048,6 +1150,7 @@
     renderHeader();
     renderMission();
     renderTraining();
+    renderPlank();
     renderCalculator();
     renderProgress();
     renderAccount();
@@ -1093,6 +1196,16 @@
       renderSession();
       renderIntel();
       renderProgress();
+    } else if (action === "plank-week") {
+      state.settings.plankWeek = parseInt(el.getAttribute("data-week"), 10);
+      scheduleSave();
+      renderPlank();
+    } else if (action === "plank-toggle") {
+      var pid = el.getAttribute("data-id");
+      if (state.checks[pid]) delete state.checks[pid];
+      else state.checks[pid] = true;
+      scheduleSave();
+      renderPlank();
     } else if (action === "sw-toggle") {
       if (sw.running) {
         sw.running = false;
