@@ -20,7 +20,7 @@
     return {
       checks: {},
       numbers: { pushups: "30", plank: "", row: "8:10", readiness: [] },
-      settings: { week: 1, day: 0, plankWeek: 1 },
+      settings: { week: 1, day: 0 },
       calc: {
         sex: "male", age: "45-49",
         scores: { push: 90, plank: 90, row: 90 },
@@ -57,7 +57,6 @@
     if (s.settings && typeof s.settings === "object") {
       if (s.settings.week) b.settings.week = s.settings.week;
       if (s.settings.day != null) b.settings.day = Math.min(5, Math.max(0, s.settings.day | 0));
-      if (s.settings.plankWeek) b.settings.plankWeek = s.settings.plankWeek;
     }
     if (s.calc && typeof s.calc === "object") {
       if (s.calc.sex === "female" || s.calc.sex === "male") b.calc.sex = s.calc.sex;
@@ -80,7 +79,6 @@
       });
     }
     if (b.settings.week < 1 || b.settings.week > 12) b.settings.week = 1;
-    if (b.settings.plankWeek < 1 || b.settings.plankWeek > 12) b.settings.plankWeek = 1;
     return b;
   }
   function loadLocal() {
@@ -290,12 +288,37 @@
       { icon: "2K", title: d4.t, detail: d4.d, meta: d4.m }
     ];
   }
+  /* Plank progression integrated into Mon/Thu/Sat (A/B/C). */
+  function plankSession(wi, letter) {
+    try {
+      var w = PLANK.weeks[wi];
+      if (!w || !w.sessions) return null;
+      for (var i = 0; i < w.sessions.length; i++) {
+        if (w.sessions[i].s === letter) return w.sessions[i];
+      }
+      return null;
+    } catch (e) { return null; }
+  }
+  function plankTask(wi, letter) {
+    var s = plankSession(wi, letter);
+    var w = PLANK.weeks[wi];
+    if (!s || !w) return null;
+    var detail = s.rx + (s.rest && s.rest !== "—" ? " · rest " + s.rest : "");
+    var meta = (s.note ? s.note + " · " : "") + w.phase + " · 3:01 progression";
+    return {
+      icon: "PL",
+      title: "Plank progression " + letter,
+      detail: detail,
+      meta: meta
+    };
+  }
   /* Returns { name, tasks } for week index wi (0-11), day di (0-5). */
   function buildDay(wi, di) {
     var wk = WEEKS[wi];
     var mxr = MATRIX[wi];
     if (di === 0) {
-      return { name: wk.mon.name, tasks: [x3Task(wk.mon.x3), mondayPP(wk), matrixTask(mxr.d1)] };
+      var monTasks = [x3Task(wk.mon.x3), mondayPP(wk), matrixTask(mxr.d1), plankTask(wi, "A")];
+      return { name: wk.mon.name, tasks: monTasks.filter(Boolean) };
     }
     if (di === 1) {
       return { name: wk.tue.name, tasks: [x3Task(wk.tue.x3), matrixTask(mxr.d2),
@@ -309,11 +332,18 @@
       tasks.push(thuPP(th.pp));
       if (th.rx) tasks.push(rxTask(th.rx));
       tasks.push(matrixTask(mxr.d3));
+      var ptB = plankTask(wi, "B");
+      if (ptB) tasks.push(ptB);
       return { name: th.name, tasks: tasks };
     }
     if (di === 4) return { name: PLAN.fri.name, tasks: PLAN.fri.tasks };
     var st = wk.sat;
-    if (st.checkin) return { name: st.name, tasks: checkinTasks(wi) };
+    if (st.checkin) {
+      var cTasks = checkinTasks(wi);
+      var ptC1 = plankTask(wi, "C");
+      if (ptC1) cTasks.push(ptC1);
+      return { name: st.name, tasks: cTasks };
+    }
     if (st.testPP) return { name: st.name, tasks: PLAN.testPP };
     var stasks = [];
     if (st.x3 && st.plank && !st.rx) {
@@ -324,6 +354,8 @@
       if (st.rx) stasks.push(rxTask(st.rx));
       stasks.push(matrixTask(mxr.d4));
     }
+    var ptC = plankTask(wi, "C");
+    if (ptC) stasks.push(ptC);
     return { name: st.name, tasks: stasks };
   }
 
@@ -342,14 +374,29 @@
     [0, 1, 3, 5].forEach(function (di) { n += countDay(wi, di).done; });
     return n;
   }
+  function countRailTotal(wi) {
+    var n = 0;
+    [0, 1, 3, 5].forEach(function (di) { n += countDay(wi, di).total; });
+    return n;
+  }
   function countWeek(wi) {
     var n = 0;
     for (var di = 0; di < 6; di++) n += countDay(wi, di).done;
     return n;
   }
+  function countWeekTotal(wi) {
+    var n = 0;
+    for (var di = 0; di < 6; di++) n += countDay(wi, di).total;
+    return n;
+  }
   function countAll() {
     var n = 0;
     for (var wi = 0; wi < 12; wi++) n += countWeek(wi);
+    return n;
+  }
+  function countAllTotal() {
+    var n = 0;
+    for (var wi = 0; wi < 12; wi++) n += countWeekTotal(wi);
     return n;
   }
 
@@ -414,7 +461,7 @@
         '" data-action="week" data-week="' + (wi + 1) + '" aria-label="Open week ' + (wi + 1) + '">' +
         '<span class="wnum">' + pad2(wi + 1) + "</span>" +
         '<span class="wphase">' + esc(wk.phase) + "</span>" +
-        '<span class="wtasks">' + countRail(wi) + '/12 tasks</span>' +
+        '<span class="wtasks">' + countRail(wi) + '/' + countRailTotal(wi) + ' tasks</span>' +
         '<span class="wload">' + esc(wk.load) + "</span></button>";
     }
     $("weekRail").innerHTML = html;
@@ -425,9 +472,10 @@
     $("heroEyebrow").innerHTML = "WEEK " + pad2(wi + 1) + " &middot; " + esc(wk.phase);
     $("heroGoal").textContent = wk.goal;
     var done = countWeek(wi);
-    $("ringNum").textContent = done + " / 18";
+    var total = countWeekTotal(wi);
+    $("ringNum").textContent = done + " / " + total;
     var circ = 326.7;
-    $("ringFg").style.strokeDashoffset = String(circ * (1 - done / 18));
+    $("ringFg").style.strokeDashoffset = String(circ * (1 - (total ? done / total : 0)));
   }
   function renderDayTabs() {
     var wi = state.settings.week - 1;
@@ -585,7 +633,8 @@
 
   function renderIntel() {
     var done = countAll();
-    var pct = Math.round(done / 216 * 100);
+    var totalAll = countAllTotal();
+    var pct = totalAll ? Math.round(done / totalAll * 100) : 0;
     var ps = plankSecs();
     var plankBad = state.numbers.plank.trim() !== "" && ps == null;
     var rs = rowSecs();
@@ -599,7 +648,7 @@
       '<div class="icard"><h3>OVERALL READINESS</h3>' +
       '<div class="readypct">' + pct + '%</div>' +
       '<div class="meter"><i style="width:' + pct + '%"></i></div>' +
-      '<div class="ready-sub">' + done + " of 216 plan tasks complete</div></div>" +
+      '<div class="ready-sub">' + done + " of " + totalAll + " plan tasks complete</div></div>" +
       '<div class="icard"><h3>TRAINING NUMBERS</h3>' +
       '<div class="field"><label>Best 1-min push-ups</label>' +
       '<input data-change="num" data-f="pushups" inputmode="numeric" value="' + esc(state.numbers.pushups) + '"></div>' +
@@ -614,7 +663,8 @@
       (rs == null ? "—" : fmtSplit(rs / 4)) + "</span></div></div></div>" +
       '<div class="icard rulecard"><div class="rule-num">PLAN RULE 01</div>' +
       "<p>Never double a missed day.</p>" +
-      '<p class="fineprint">Keep going with the next planned session. Do not stack two hard workouts.</p></div>';
+      '<p class="fineprint">Keep going with the next planned session. Do not stack two hard workouts.</p></div>' +
+      plankGuideHtml();
     $("intelCol").innerHTML = html;
   }
   function renderTraining() {
@@ -625,35 +675,27 @@
     renderIntel();
   }
 
-  /* ================= plank progression view ================= */
-  function plankId(wi, s) { return "pw" + pad2(wi + 1) + String(s).toLowerCase(); }
-  function countPlank() {
-    var done = 0, total = 0, wi, i;
-    for (wi = 0; wi < PLANK.weeks.length; wi++) {
-      var ss = PLANK.weeks[wi].sessions;
-      for (i = 0; i < ss.length; i++) {
-        total++;
-        if (state.checks[plankId(wi, ss[i].s)]) done++;
-      }
-    }
-    return { done: done, total: total };
-  }
-  function plankInfoHtml() {
-    var P = PLANK, html = "";
-    var i;
+  /* ================= plank guide (integrated) ================= */
+  function plankGuideHtml() {
+    var P = PLANK, html = "", i;
+    if (!P.weeks || !P.weeks.length) return "";
+    html += '<div class="icard"><h3>PLANK GUIDE · 3:01 PROGRESSION</h3>';
+    html += '<p class="fineprint">Plank progression is built into Mon (A), Thu (B), Sat (C) each week. Every second only counts when it is clean — stop on the first form break.</p></div>';
     html += '<div class="icard"><h3>FORM CHECKLIST</h3><ul class="plist">';
     for (i = 0; i < P.form.length; i++) {
       html += "<li><b>" + esc(P.form[i][0]) + ".</b> " + esc(P.form[i][1]) + "</li>";
     }
     html += "</ul></div>";
-    html += '<div class="icard"><h3>4-MINUTE SETUP · BEFORE EACH SESSION</h3><ul class="plist">';
+    html += '<div class="icard"><h3>4-MINUTE SETUP</h3><ul class="plist">';
     for (i = 0; i < P.setup.length; i++) html += "<li>" + esc(P.setup[i]) + "</li>";
     html += "</ul></div>";
-    html += '<div class="icard"><h3>SCALING RULE</h3><p class="fineprint">' + esc(P.scaling) + "</p>" +
-      '<p class="fineprint">This plan assumes a clean baseline of at least 1:15.</p></div>';
+    if (P.scaling) {
+      html += '<div class="icard"><h3>SCALING RULE</h3><p class="fineprint">' + esc(P.scaling) + "</p>" +
+        '<p class="fineprint">This plan assumes a clean baseline of at least 1:15.</p></div>';
+    }
     html += '<div class="icard"><h3>CHECKPOINT LADDER</h3><ul class="plist">';
     for (i = 0; i < P.checkpoints.length; i++) {
-      html += "<li><b>" + esc(P.checkpoints[i][0]) + " — " + esc(P.checkpoints[i][1]) +
+      html += "<li><b>" + esc(P.checkpoints[i][0]) + " \u2014 " + esc(P.checkpoints[i][1]) +
         ".</b> " + esc(P.checkpoints[i][2]) + "</li>";
     }
     html += "</ul></div>";
@@ -664,64 +706,6 @@
     for (i = 0; i < P.testDay.length; i++) html += "<li>" + esc(P.testDay[i]) + "</li>";
     html += "</ul></div>";
     return html;
-  }
-  function renderPlank() {
-    var root = $("plankRoot");
-    if (!root || !PLANK.weeks.length) return;
-    var wi = Math.min(PLANK.weeks.length - 1,
-      Math.max(0, (state.settings.plankWeek || 1) - 1));
-    var wk = PLANK.weeks[wi];
-    var c = countPlank();
-    var pct = c.total ? Math.round(c.done / c.total * 100) : 0;
-
-    var html = '<div class="proghead"><div class="eyebrow">12-WEEK PLANK PROGRESSION &middot; TO 3:01</div>' +
-      "<h1>Own the position. Prove the hold.</h1>" +
-      '<p class="progintro">Three focused sessions per week, 48 hours apart. ' +
-      "Every second only counts when it is clean — stop the timer on the first form break.</p></div>";
-
-    html += '<div class="pw-grid">';
-    for (var i = 0; i < PLANK.weeks.length; i++) {
-      var w = PLANK.weeks[i], wd = 0;
-      for (var k = 0; k < w.sessions.length; k++) {
-        if (state.checks[plankId(i, w.sessions[k].s)]) wd++;
-      }
-      html += '<button class="pwbtn' + (i === wi ? " active" : "") +
-        '" data-action="plank-week" data-week="' + (i + 1) +
-        '" aria-label="Open plank week ' + (i + 1) + '">' +
-        '<span class="pwnum">' + pad2(i + 1) + "</span>" +
-        '<span class="pwphase">' + esc(w.phase) + "</span>" +
-        '<span class="pwtasks">' + wd + "/3 done</span></button>";
-    }
-    html += "</div>";
-
-    html += '<div class="sesscard"><div class="sess-eyebrow">WEEK ' + pad2(wk.n) +
-      " &middot; " + esc(wk.phase) + "</div><h2>" + esc(wk.title) + "</h2>" +
-      '<div class="tasks">';
-    for (var t = 0; t < wk.sessions.length; t++) {
-      var s = wk.sessions[t];
-      var id = plankId(wi, s.s);
-      var isDone = !!state.checks[id];
-      html += '<article class="task' + (isDone ? " done" : "") + '">' +
-        '<span class="tbadge">PP</span><div class="tbody">' +
-        '<div class="ttitle">Session ' + esc(s.s) + "</div>" +
-        '<div class="tdetail">' + esc(s.rx) +
-        (s.rest && s.rest !== "—" ? " · rest " + esc(s.rest) : "") + "</div>" +
-        (s.note ? '<div class="tmeta">' + esc(s.note) + "</div>" : "") + "</div>" +
-        '<button class="switch" role="checkbox" aria-checked="' + isDone +
-        '" aria-label="Mark ' + (isDone ? "incomplete" : "complete") +
-        ": plank week " + (wi + 1) + " session " + esc(s.s) +
-        '" data-action="plank-toggle" data-id="' + id + '"></button></article>';
-    }
-    html += "</div></div>";
-
-    html += '<div class="icard"><h3>PROGRESSION PROOF</h3>' +
-      '<div class="readypct">' + pct + '%</div>' +
-      '<div class="meter"><i style="width:' + pct + '%"></i></div>' +
-      '<div class="ready-sub">' + c.done + " of " + c.total +
-      " plank sessions complete</div></div>";
-
-    html += plankInfoHtml();
-    root.innerHTML = html;
   }
 
   /* ================= stopwatch (one global timer) ================= */
@@ -1150,7 +1134,6 @@
     renderHeader();
     renderMission();
     renderTraining();
-    renderPlank();
     renderCalculator();
     renderProgress();
     renderAccount();
@@ -1196,16 +1179,6 @@
       renderSession();
       renderIntel();
       renderProgress();
-    } else if (action === "plank-week") {
-      state.settings.plankWeek = parseInt(el.getAttribute("data-week"), 10);
-      scheduleSave();
-      renderPlank();
-    } else if (action === "plank-toggle") {
-      var pid = el.getAttribute("data-id");
-      if (state.checks[pid]) delete state.checks[pid];
-      else state.checks[pid] = true;
-      scheduleSave();
-      renderPlank();
     } else if (action === "sw-toggle") {
       if (sw.running) {
         sw.running = false;
