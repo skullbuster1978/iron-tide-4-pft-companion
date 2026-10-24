@@ -464,6 +464,25 @@ table.stable { width: 100%; border-collapse: collapse; font-size: 14px; }
 .cloud-state .k { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; color: var(--muted); }
 .cloud-state strong { font-family: var(--mono); font-size: 13px; }
 
+.btn.danger { background: var(--signal); color: var(--ink); font-weight: 700; }
+.btn.danger:hover { background: #e04426; }
+.resetcard {
+  border: 2px solid var(--signal); background: var(--paper); padding: 20px;
+  max-width: 560px; box-shadow: var(--shadow-sm); margin-top: 20px;
+}
+.resetcard .eyebrow { color: var(--signal); }
+.resetcard h2 { font-size: 24px; letter-spacing: -0.5px; color: var(--navy); margin: 6px 0 8px; }
+.resetdesc { margin: 0 0 14px; }
+.resetwarn {
+  border: 1px solid var(--signal); background: #fdf0ec;
+  padding: 12px 14px; font-size: 14px; margin: 0 0 14px;
+}
+.reset-done {
+  font-family: var(--mono); font-size: 13px; border: 1px solid var(--ink);
+  background: var(--lime); padding: 10px 12px; margin: 0 0 14px;
+}
+.reset-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
 .remind { margin-top: 32px; max-width: 860px; }
 .remind h2 { font-size: 30px; letter-spacing: -1px; color: var(--navy); margin: 6px 0 8px; }
 .remind .fineprint { max-width: 640px; }
