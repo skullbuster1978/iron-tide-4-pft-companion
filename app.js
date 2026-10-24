@@ -1,4 +1,4 @@
-/* IRON TIDE 4 V31 — app logic.
+/* IRON TIDE 4 V32 — app logic.
  * Static single-page app. Local state always works (localStorage, key
  * "ironTide4.v1" — unchanged so existing users keep their data). When logged
  * in via Supabase, the same state syncs to the cloud `progress` table as JSONB.
@@ -282,10 +282,37 @@
       meta: meta
     };
   }
+  /* Week 1 Day 1 is the initial USCG PFT assessment: 1-minute push-ups,
+   * a max forearm plank, and a 2,000 m row for time. Each task carries an
+   * `assess` field naming the Training Numbers ("best numbers") slot its
+   * entry block writes to, so the plan builds from the assessment results. */
+  function assessmentTasks() {
+    return [
+      { icon: "PU", title: "Push-ups — 1 minute",
+        detail: "Maximum correct reps in 1 minute",
+        meta: "USCG PFT assessment · Use official form · Count only correct reps",
+        assess: "pushups" },
+      { icon: "PL", title: "Forearm plank — max hold",
+        detail: "Hold for as long as possible",
+        meta: "USCG PFT assessment · Elbows under shoulders · One straight line from head to heels · Stop on the first form break",
+        assess: "plank" },
+      { icon: "2K", title: "2,000 m row — for time",
+        detail: "Row 2,000 m as fast as you can",
+        meta: "USCG PFT assessment · Do not start too fast · Build pace in the second half",
+        assess: "row" }
+    ];
+  }
   /* Returns { name, tasks } for week index wi (0-11), day di (0-5). */
   function buildDay(wi, di) {
     var wk = WEEKS[wi];
     var mxr = MATRIX[wi];
+    if (wi === 0 && di === 0) {
+      return {
+        name: "Initial USCG PFT Assessment",
+        intro: "Start the 12 weeks with a real baseline. Do all three events in order — push-ups, plank, then the row — resting as needed between them. Enter each result in the block below the exercise. Each result fills in your Training Numbers (your best numbers), and your plan builds from those numbers. The standards shown under each result are for your sex and age bracket, set in the Target Calculator.",
+        tasks: assessmentTasks()
+      };
+    }
     if (di === 0) {
       var monTasks = [x3Task(wk.mon.x3), mondayPP(wk), matrixTask(mxr.d1), plankTask(wi, "A")];
       return { name: wk.mon.name, tasks: monTasks.filter(Boolean) };
@@ -550,12 +577,46 @@
     }
   }, true);
 
+  /* Age/sex-specific USCG standard for one assessment event, from the same
+   * scoring tables the Target Calculator uses: the 45-pt passing value and
+   * the value for the user's currently selected target score. */
+  function assessRefHtml(field) {
+    var evKey = field === "pushups" ? "push" : field;
+    var pass = tableEntry(state.calc.sex, state.calc.age, 45);
+    var targetScore = state.calc.scores[evKey];
+    var target = tableEntry(state.calc.sex, state.calc.age, targetScore);
+    if (!pass || !target) return "";
+    function val(e) { return evKey === "push" ? String(e.pushups) : String(e[evKey]); }
+    return cap(state.calc.sex) + " " + state.calc.age.replace("-", "–") +
+      " · Pass (45 pts): " + val(pass) +
+      " · Target (" + targetScore + " pts): " + val(target);
+  }
+  /* Entry block rendered below an assessment exercise. It edits the same
+   * state.numbers slot as the Training Numbers inputs (data-change="num"),
+   * so the two stay in sync and the plan rebuilds from the entered result. */
+  function assessHtml(field) {
+    var isPush = field === "pushups";
+    var label = isPush ? "YOUR RESULT — REPS IN 1 MINUTE"
+      : (field === "plank" ? "YOUR RESULT — PLANK HOLD (MIN:SEC)" : "YOUR RESULT — 2,000 M TIME (MIN:SEC)");
+    var val = state.numbers[field];
+    var bad = field === "plank" && String(val).trim() !== "" && parsePlankStrict(val) == null;
+    var ref = assessRefHtml(field);
+    return '<div class="assess"><label>' + label + "</label>" +
+      '<input data-change="num" data-f="' + field + '"' +
+      (isPush ? ' inputmode="numeric"' : "") +
+      ' placeholder="' + (isPush ? "30" : (field === "plank" ? "2:40" : "8:10")) + '"' +
+      ' value="' + esc(val) + '"' + (bad ? ' class="invalid"' : "") + ">" +
+      (bad ? '<div class="plank-err">Enter a time such as 2:17, with seconds from 00 to 59.</div>' : "") +
+      (ref ? '<div class="assess-ref">' + esc(ref) + "</div>" : "") +
+      '<div class="assess-note">Saved to Training Numbers — your best numbers. Your plan builds from this result.</div></div>';
+  }
   function renderSession() {
     var wi = state.settings.week - 1;
     var di = state.settings.day;
     var day = buildDay(wi, di);
     var html = '<div class="sess-eyebrow">SESSION ' + (di + 1) + " OF 6</div>";
     html += "<h2>" + esc(day.name) + "</h2>";
+    if (day.intro) html += '<p class="sess-intro">' + esc(day.intro) + "</p>";
     html += '<div class="sw"><span class="sw-label">STOPWATCH</span>' +
       '<span class="sw-disp" id="swDisp">00:00</span>' +
       '<span class="sw-btns" id="swBtns"></span></div>';
@@ -575,6 +636,7 @@
         (task.meta ? '<div class="tmeta">' + esc(task.meta) + "</div>" : "") +
         (task.x3kind ? x3VideosHtml(task.x3kind) : "") +
         (task.video ? stretchVideoHtml(task.video) : "") +
+        (task.assess ? assessHtml(task.assess) : "") +
         "</div>" +
         '<button class="switch" role="checkbox" aria-checked="' + isDone +
         '" aria-label="Mark ' + (isDone ? "incomplete" : "complete") + ": " + esc(task.title) +
