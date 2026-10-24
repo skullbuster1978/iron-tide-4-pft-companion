@@ -176,6 +176,20 @@ p { margin: 0 0 12px; }
 }
 .sess-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; color: var(--muted); }
 .sesscard h2 { font-size: 30px; letter-spacing: -1px; color: var(--navy); margin: 6px 0 14px; }
+.sess-intro { max-width: 640px; margin: 0 0 14px; }
+
+/* ---------- assessment entry blocks (Week 1 Day 1) ---------- */
+.assess {
+  margin-top: 12px; border: 1px solid var(--ink); background: var(--cream);
+  padding: 12px 14px; max-width: 420px;
+}
+.assess label {
+  display: block; font-family: var(--mono); font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+}
+.assess input { font-size: 20px; font-weight: 700; }
+.assess-ref { font-family: var(--mono); font-size: 12px; margin-top: 8px; }
+.assess-note { font-size: 13px; color: var(--muted); margin-top: 6px; }
 
 .sw {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
