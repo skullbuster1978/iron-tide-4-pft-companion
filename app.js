@@ -1,4 +1,4 @@
-/* IRON TIDE 4 V30 — app logic.
+/* IRON TIDE 4 V31 — app logic.
  * Static single-page app. Local state always works (localStorage, key
  * "ironTide4.v1" — unchanged so existing users keep their data). When logged
  * in via Supabase, the same state syncs to the cloud `progress` table as JSONB.
@@ -940,6 +940,8 @@
 
   /* ================= account view ================= */
   var acctTab = "signin";
+  var resetArmed = false;
+  var resetDone = false;
   function authMessage(msg, isErr) {
     var el = $("authMsg");
     if (!el) return;
@@ -950,6 +952,42 @@
     if (currentUser && cloudOn) return "Saved to cloud";
     if (currentUser) return "Saving";
     return "Local only";
+  }
+  function renderReset() {
+    var html = '<div class="resetcard"><div class="eyebrow">RESET</div>' +
+      "<h2>Reset all progress</h2>" +
+      '<p class="resetdesc">Clear completed workouts, training numbers, checkpoints, targets, and your last-opened week and day.</p>';
+    if (resetDone) {
+      html += '<div class="reset-done" role="status">All progress has been reset.</div>';
+    }
+    if (resetArmed) {
+      html += '<div class="resetwarn" role="alert"><b>This cannot be undone.</b> ' +
+        (currentUser ? "Your saved progress in the cloud will also be cleared. " : "") +
+        "This does not delete your account or sign you out.</div>" +
+        '<div class="reset-actions">' +
+        '<button class="btn danger" data-action="reset-confirm">Yes, reset all progress</button>' +
+        '<button class="btn ghost" data-action="reset-cancel">Cancel</button></div>';
+    } else {
+      html += '<button class="btn danger" data-action="reset-progress">Reset all progress</button>';
+    }
+    html += "</div>";
+    return html;
+  }
+  function doResetAllProgress() {
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    if (sw.running) {
+      sw.running = false;
+      if (sw.timer) clearInterval(sw.timer);
+      sw.timer = null;
+    }
+    sw.elapsed = 0;
+    state = blankState();
+    resetArmed = false;
+    resetDone = true;
+    persistLocal();
+    activeTab = "account";
+    renderAll();
+    if (currentUser && supabaseClient) cloudSave();
   }
   function renderAccount() {
     var root = $("acctRoot");
@@ -985,6 +1023,7 @@
         esc(cloudStatusLabel()) + "</strong></div>" +
         '<button class="btn" data-action="logout">Sign out</button></div>';
     }
+    html += renderReset();
     html += renderReminders();
     root.innerHTML = html;
   }
@@ -1112,8 +1151,10 @@
 
     if (action === "brand") {
       activeTab = "training";
+      resetArmed = false;
       renderTabs();
     } else if (action === "tab") {
+      if (el.getAttribute("data-tab") !== "account") resetArmed = false;
       activeTab = el.getAttribute("data-tab");
       renderTabs();
     } else if (action === "week") {
@@ -1178,6 +1219,15 @@
     } else if (action === "acct-tab") {
       acctTab = el.getAttribute("data-atab");
       renderAccount();
+    } else if (action === "reset-progress") {
+      resetArmed = true;
+      resetDone = false;
+      renderAccount();
+    } else if (action === "reset-cancel") {
+      resetArmed = false;
+      renderAccount();
+    } else if (action === "reset-confirm") {
+      doResetAllProgress();
     } else if (action === "signup" || action === "login") {
       if (!supabaseClient) { authMessage("Cloud login is not configured yet.", true); return; }
       var email = $("authEmail").value.trim();
