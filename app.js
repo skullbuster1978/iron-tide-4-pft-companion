@@ -303,7 +303,7 @@
     ];
   }
   /* Returns { name, tasks } for week index wi (0-11), day di (0-5). */
-  function buildDay(wi, di) {
+  function buildBaseDay(wi, di) {
     var wk = WEEKS[wi];
     var mxr = MATRIX[wi];
     if (wi === 0 && di === 0) {
@@ -351,24 +351,51 @@
     return { name: st.name, tasks: stasks };
   }
 
+  /* X3 follows the same four-day split throughout all 12 weeks.
+   * Keep original task slots so existing non-X3 checkmarks stay attached
+   * to their exercises when Saturday Pull moves to Friday. */
+  function buildDay(wi, di) {
+    var day = buildBaseDay(wi, di);
+    var wk = WEEKS[wi];
+    var originalX3 = null;
+    day.tasks = day.tasks.filter(function (task, index) {
+      task.checkId = taskId(wi + 1, di + 1, index + 1);
+      if (task.x3kind) { originalX3 = task; return false; }
+      return !(di === 3 && task.icon === "RX" && task.title === "No X3 today");
+    });
+    if (di === 0 || di === 1 || di === 3 || di === 4) {
+      var source = di === 0 ? wk.mon.x3 : di === 1 ? wk.tue.x3 :
+        di === 3 ? (wk.thu.x3 || wk.mon.x3) : (wk.sat.x3 || wk.tue.x3);
+      var task = originalX3 || x3Task(source);
+      task.checkId = originalX3 ? originalX3.checkId :
+        di === 4 && wk.sat.x3 ? taskId(wi + 1, 6, 1) :
+        "w" + pad2(wi + 1) + "s" + (di + 1) + "x3";
+      if (originalX3) day.tasks.unshift(task);
+      else day.tasks.push(task);
+    }
+    if (di === 4) day.name += " & X3 Pull";
+    if (di === 5) day.name = day.name.replace(" & X3 Pull", "");
+    return day;
+  }
+
   /* ================= counts ================= */
   function taskId(w, s, t) { return "w" + pad2(w) + "s" + s + "t" + t; }
   function countDay(wi, di) {
     var day = buildDay(wi, di);
     var n = 0;
     for (var t = 0; t < day.tasks.length; t++) {
-      if (state.checks[taskId(wi + 1, di + 1, t + 1)]) n++;
+      if (state.checks[day.tasks[t].checkId]) n++;
     }
     return { done: n, total: day.tasks.length };
   }
   function countRail(wi) {
     var n = 0;
-    [0, 1, 3, 5].forEach(function (di) { n += countDay(wi, di).done; });
+    [0, 1, 3, 4, 5].forEach(function (di) { n += countDay(wi, di).done; });
     return n;
   }
   function countRailTotal(wi) {
     var n = 0;
-    [0, 1, 3, 5].forEach(function (di) { n += countDay(wi, di).total; });
+    [0, 1, 3, 4, 5].forEach(function (di) { n += countDay(wi, di).total; });
     return n;
   }
   function countWeek(wi) {
@@ -624,7 +651,7 @@
     var doneN = 0;
     for (var t = 0; t < day.tasks.length; t++) {
       var task = day.tasks[t];
-      var id = taskId(wi + 1, di + 1, t + 1);
+      var id = task.checkId;
       var isDone = !!state.checks[id];
       if (isDone) doneN++;
       html += '<article class="task' + (isDone ? " done" : "") + '">' +
