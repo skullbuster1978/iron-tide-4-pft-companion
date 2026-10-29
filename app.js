@@ -1,4 +1,4 @@
-/* IRON TIDE 4 V32 — app logic.
+/* IRON TIDE 4 V33 — app logic.
  * Static single-page app. Local state always works (localStorage, key
  * "ironTide4.v1" — unchanged so existing users keep their data). When logged
  * in via Supabase, the same state syncs to the cloud `progress` table as JSONB.
@@ -303,7 +303,7 @@
     ];
   }
   /* Returns { name, tasks } for week index wi (0-11), day di (0-5). */
-  function buildBaseDay(wi, di) {
+  function buildDay(wi, di) {
     var wk = WEEKS[wi];
     var mxr = MATRIX[wi];
     if (wi === 0 && di === 0) {
@@ -351,51 +351,24 @@
     return { name: st.name, tasks: stasks };
   }
 
-  /* X3 follows the same four-day split throughout all 12 weeks.
-   * Keep original task slots so existing non-X3 checkmarks stay attached
-   * to their exercises when Saturday Pull moves to Friday. */
-  function buildDay(wi, di) {
-    var day = buildBaseDay(wi, di);
-    var wk = WEEKS[wi];
-    var originalX3 = null;
-    day.tasks = day.tasks.filter(function (task, index) {
-      task.checkId = taskId(wi + 1, di + 1, index + 1);
-      if (task.x3kind) { originalX3 = task; return false; }
-      return !(di === 3 && task.icon === "RX" && task.title === "No X3 today");
-    });
-    if (di === 0 || di === 1 || di === 3 || di === 4) {
-      var source = di === 0 ? wk.mon.x3 : di === 1 ? wk.tue.x3 :
-        di === 3 ? (wk.thu.x3 || wk.mon.x3) : (wk.sat.x3 || wk.tue.x3);
-      var task = originalX3 || x3Task(source);
-      task.checkId = originalX3 ? originalX3.checkId :
-        di === 4 && wk.sat.x3 ? taskId(wi + 1, 6, 1) :
-        "w" + pad2(wi + 1) + "s" + (di + 1) + "x3";
-      if (originalX3) day.tasks.unshift(task);
-      else day.tasks.push(task);
-    }
-    if (di === 4) day.name += " & X3 Pull";
-    if (di === 5) day.name = day.name.replace(" & X3 Pull", "");
-    return day;
-  }
-
   /* ================= counts ================= */
   function taskId(w, s, t) { return "w" + pad2(w) + "s" + s + "t" + t; }
   function countDay(wi, di) {
     var day = buildDay(wi, di);
     var n = 0;
     for (var t = 0; t < day.tasks.length; t++) {
-      if (state.checks[day.tasks[t].checkId]) n++;
+      if (state.checks[taskId(wi + 1, di + 1, t + 1)]) n++;
     }
     return { done: n, total: day.tasks.length };
   }
   function countRail(wi) {
     var n = 0;
-    [0, 1, 3, 4, 5].forEach(function (di) { n += countDay(wi, di).done; });
+    [0, 1, 3, 5].forEach(function (di) { n += countDay(wi, di).done; });
     return n;
   }
   function countRailTotal(wi) {
     var n = 0;
-    [0, 1, 3, 4, 5].forEach(function (di) { n += countDay(wi, di).total; });
+    [0, 1, 3, 5].forEach(function (di) { n += countDay(wi, di).total; });
     return n;
   }
   function countWeek(wi) {
@@ -637,6 +610,19 @@
       (ref ? '<div class="assess-ref">' + esc(ref) + "</div>" : "") +
       '<div class="assess-note">Saved to Training Numbers — your best numbers. Your plan builds from this result.</div></div>';
   }
+  /* Display order for a session: X3 first, then push-ups, then plank,
+   * then row last. Recovery notes (RX) and anything else stay after the
+   * row, in their original order. This only changes display order: each
+   * task keeps its original position-based check id, so existing
+   * checkmarks stay attached to the right exercise instead of swapping
+   * when plank and row change places. */
+  function taskDisplayRank(task) {
+    if (task.icon === "X3") return 0;
+    if (task.icon === "GO" || task.icon === "PU") return 1;
+    if (task.icon === "PL") return 2;
+    if (task.icon === "2K") return 3;
+    return 4;
+  }
   function renderSession() {
     var wi = state.settings.week - 1;
     var di = state.settings.day;
@@ -648,10 +634,17 @@
       '<span class="sw-disp" id="swDisp">00:00</span>' +
       '<span class="sw-btns" id="swBtns"></span></div>';
     html += '<div class="tasks">';
+    var displayTasks = day.tasks.map(function (task, i) {
+      return { task: task, orig: i };
+    });
+    displayTasks.sort(function (a, b) {
+      var r = taskDisplayRank(a.task) - taskDisplayRank(b.task);
+      return r !== 0 ? r : a.orig - b.orig;
+    });
     var doneN = 0;
-    for (var t = 0; t < day.tasks.length; t++) {
-      var task = day.tasks[t];
-      var id = task.checkId;
+    for (var t = 0; t < displayTasks.length; t++) {
+      var task = displayTasks[t].task;
+      var id = taskId(wi + 1, di + 1, displayTasks[t].orig + 1);
       var isDone = !!state.checks[id];
       if (isDone) doneN++;
       html += '<article class="task' + (isDone ? " done" : "") + '">' +
